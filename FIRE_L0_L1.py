@@ -1,16 +1,27 @@
 # -*- coding: utf-8 -*-
 """
-Spyder Editor
+FIRE_L0_L1.py
 
-This temporary script file is located here:
-/Users/abcrew/.spyder2/.temp.py
+Convertor form the FIRE L0 packets to L1 data
+
 """
 
-datafile = '/Users/abcrew/Desktop/FB_data/FIRE_CAL/fire_data_121119_preship.rtf'
+import spacepy.datamodel as dm
 
-df = open(datafile, 'r')
-header = df.readline()
-raw_data = df.readlines()
+datafile = 'tests/data/fire_data_121119_preship.rtf'
+
+def readL0(datafile):
+    """
+    read in the data file and return a list of the line sin the file
+    """
+    df = open(datafile, 'r')
+    #ski9p the header
+    header = df.readline()
+    raw_data = df.readlines()
+    return [v.strip() for v in raw_data]
+
+
+
 
 data_type = list()
 pkt_cntr = list()

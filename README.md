@@ -12,3 +12,11 @@ Thoughts
 - output the L1 data into JSON headed ascii (cool LANL designed ASCII format with full metatdata) (spacepy makes this easy)
 - Flag errors and put them into the header
 - make this a stand alone application that we run from the command line
+
+Requirements
+------------
+Add things here as requirements are added to the L0-L1
+
+# Spacepy
+# numpy
+# python 2.6 or 2.7
