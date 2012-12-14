@@ -31,39 +31,38 @@ def readL0(datafile):
     return data
 
 
+def fillArr(shape, fill=-999):
+    """
+    create an array of a given shape filled with fill values
+    """
+    tmp = np.zeros(shape, np.int)
+    tmp[:] = fill
+    return dm.dmarray(tmp)
+
 def parseL0(indata):
     """
     take in a SpaceData of raw L0 and parse it
     return a SpaceData with the new info added
     """
-    data_type = list()
-    pkt_cntr = list()
-    cmd_reg_val = list()
-    cntrl_reg = list()
-    d1hr = list()
-    d2hr = list()
-    hr0 = list()
-    hr1 = list()
-    hr2 = list()
-    hr3 = list()
-    hr4 = list()
-    hr5 = list()
-    
+    indata['type']        = fillArr(len(indata['raw']))
+    indata['pkt_cntr']    = fillArr(len(indata['raw']))
+    indata['cmd_reg_val'] = fillArr(len(indata['raw']))
+    indata['cntrl_reg']   = fillArr(len(indata['raw']))
+    indata['d1hr']        = fillArr( (len(indata['raw']), 6) )
+    indata['d2hr']        = fillArr( (len(indata['raw']), 6) )
 
-    for dat in indata['raw']:
+    for ii, dat in enumerate(indata['raw']):
         if(len(dat) == 96):
-            data_type.append(int(dat[0:2],16))
-            pkt_cntr.append(int(dat[2:4],16))
-            cmd_reg_val.append(int(dat[4:6],16))
-            cntrl_reg.append(int(dat[6:8],16))
-            hr = list()
-            for chan in range(6):
-                hr.append(int(dat[24+chan*2:26+chan*2],16))
-            d1hr.append(hr)
-            hr = list()        
-            for chan in range(6):
-                hr.append(int(dat[36+chan*2:38+chan*2],16))
-            d2hr.append(hr)
+            indata['type'][ii] = int(dat[0:2],16)
+            indata['pkt_cntr'][ii] = int(dat[2:4],16)
+            indata['cmd_reg_val'][ii] = int(dat[4:6],16)
+            indata['cntrl_reg'][ii] = int(dat[6:8],16)
+            hr = [int(dat[24+chan*2:26+chan*2],16) for chan in range(6)]
+            indata['d1hr'][ii] = hr
+            hr = [int(dat[36+chan*2:38+chan*2],16) for chan in range(6)]
+            indata['d2hr'][ii] = hr
+
+    #TODF the arrays are populated correctly to here!!
     
     nlines = len(data_type)
 
