@@ -47,7 +47,8 @@ class L0(dm.SpaceData):
         raw_data = [v.strip() for v in raw_data]
         raw_data = dm.dmarray([v.split(kwargs['delimiter']) for v in raw_data])
         # the epochs are the first column
-        self['Epoch'] = raw_data[:,0]
+        epoch = [dup.parse(v) for v in raw_data[:,0]]
+        self['Epoch'] = epoch
         # raw data is the rest
         self['raw_data'] = raw_data[:,1:]
 
