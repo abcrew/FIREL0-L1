@@ -5,7 +5,9 @@ FIRE_L0_L1.py
 Convertor form the FIRE L0 packets to L1 data
 
 """
+
 # standard library includes (alphabetical)
+from abc import ABCMeta, abstractmethod
 import datetime
 # dependency includes (alphabetical)
 import dateutil.parser as dup
@@ -13,72 +15,109 @@ import numpy as np
 import spacepy.datamodel as dm
 
 
-
-
-def readL0(datafile):
+class L0(dm.SpaceData):
     """
-    read in the data file and return a list of the line sin the file
+    base class to hold L0 data
     """
-    df = open(datafile, 'r')
-    #ski9p the header
-    header = df.readline().strip()
-    raw_data = df.readlines()
-    data = dm.SpaceData() # dictionary to hold the data
-    data.attrs['ReadDatetime'] = datetime.datetime.utcnow() #TODO think in UTC or local?  I like UTC
-    data.attrs['DataDatetime'] = dup.parse(header)
-    #TODO there will be MSU timestanps and all on the lines from BIRD, those need to be looked at
-    data['raw'] = [v.strip() for v in raw_data]
-    return data
+    __metaclass__ = ABCMeta
+
+    def __init__(self, filename, outfilename):
+        """
+        given a filename read in the data
+        """
+        self.outfilename = outfilename
+        self.filename = filename
+        self._readL0()
+        self.writeFile(self.outfilename)
+
+    def readL0(self, **kwargs):
+        """
+        read in the data file and return a list of the line sin the file
+        """
+        if 'delimiter' not in kwargs:
+            kwargs['delimiter'] = ' '
+        if 'skiprows' not in kwargs:
+            kwargs['skiprows'] = 0
+        df = open(self.filename, 'r')
+        #skip the header
+        for v in range(kwargs['skiprows']):
+            header = df.readline().strip()
+        raw_data = df.readlines()
+        #TODO there will be MSU timestanps and all on the lines from BIRD, those need to be looked at
+        raw_data = [v.strip() for v in raw_data]
+        raw_data = dm.dmarray([v.split(kwargs['delimiter']) for v in raw_data])
+        # the epochs are the first column
+        self['Epoch'] = raw_data[:,0]
+        # raw data is the rest
+        self['raw_data'] = raw_data[:,1:]
+
+    @abstractmethod
+    def parseData(self):
+        """
+        Parse self['Epoch'] and self['raw_data'] into meaning quantities
+        """
+        pass
+
+    def writeFile(self):
+        """
+        write out the data to a json headed ASCII file
+        """
+        # don't write ou the raw data
+        del self['raw_data']
+        dm.toJSONheadedASCII(self.outfilename, self, depend0='Epoch', order=['Epoch'])
 
 
-def fillArr(shape, fill=-999):
+class ConfigFile(L0):
     """
-    create an array of a given shape filled with fill values
+    class for a configuration file
     """
-    tmp = np.zeros(shape, np.int)
-    tmp[:] = fill
-    return dm.dmarray(tmp)
+    def parseData(self):
+        """
+        Parse self['Epoch'] and self['raw_data'] into meaning quantities
+        """
+        self['data_type'] = self['raw_data'][:,0]
+        self['packet_counter'] = self['raw_data'][:,1]
+        self['cmd_reg_value'] = self['raw_data'][:,2]
+        self['cntrl_reg'] = self['raw_data'][:,3]
+        self['hi_res_interval'] = self['raw_data'][:,4]
+        self['context selection'] = self['raw_data'][:,5]
+        self['mbp_selection'] = self['raw_data'][:,6]
 
-def parseL0(indata):
+
+class MBPFile(L0):
     """
-    take in a SpaceData of raw L0 and parse it
-    return a SpaceData with the new info added
+    class for microburst parameter data
     """
-    indata['type']        = fillArr(len(indata['raw']))
-    indata['pkt_cntr']    = fillArr(len(indata['raw']))
-    indata['cmd_reg_val'] = fillArr(len(indata['raw']))
-    indata['cntrl_reg']   = fillArr(len(indata['raw']))
-    indata['d1hr']        = fillArr( (len(indata['raw']), 6) )
-    indata['d2hr']        = fillArr( (len(indata['raw']), 6) )
+    def parseData(self):
+        """
+        Parse self['Epoch'] and self['raw_data'] into meaning quantities
+        """
+        self['MB0_100'] = self['raw_data'][:,0:2]
+        self['MB0_500'] = self['raw_data'][:,2:5]
+        self['MB1_100'] = self['raw_data'][:,5:7]
+        self['MB1_500'] = self['raw_data'][:,7:10]
 
-    for ii, dat in enumerate(indata['raw']):
-        if(len(dat) == 96):
-            indata['type'][ii] = int(dat[0:2],16)
-            indata['pkt_cntr'][ii] = int(dat[2:4],16)
-            indata['cmd_reg_val'][ii] = int(dat[4:6],16)
-            indata['cntrl_reg'][ii] = int(dat[6:8],16)
-            hr = [int(dat[24+chan*2:26+chan*2],16) for chan in range(6)]
-            indata['d1hr'][ii] = hr
-            hr = [int(dat[36+chan*2:38+chan*2],16) for chan in range(6)]
-            indata['d2hr'][ii] = hr
 
-    #TODF the arrays are populated correctly to here!!
-    
-    nlines = len(data_type)
+class ContextFile(L0):
+    """
+    class for context data
+    """
+    def parseData(self):
+        """
+        Parse self['Epoch'] and self['raw_data'] into meaning quantities
+        """
+        self['context'] = self['raw_data'][...]
 
-    d = list()
 
-    for j in range(int(nlines/16)):
-        data_str = dict(pkt_cntr=pkt_cntr[j*16+0:j*16+16], cmd_vals=cmd_reg_val[j*16+0:j*16+16],
-                        d1hr=d1hr[j*16+0:j*16+16], d2hr=d2hr[j*16+0:j*16+16])
-        d.append(data_str)
-    
-
-if __name__ == '__main__':
-    datafile = 'tests/data/fire_data_121119_preship.rtf'
-    d1 = readL0(datafile)
-    d2 = parseL0(d1)
-
+class HiResFile(L0):
+    """
+    class for hi-res data data
+    """
+    def parseData(self):
+        """
+        Parse self['Epoch'] and self['raw_data'] into meaning quantities
+        """
+        self['hr'] = self['raw_data'][...]
 
 
 
@@ -112,4 +151,6 @@ FIRE ICD definitions by byte:
     46-47: HR11
 """
 
-    
+
+
+
