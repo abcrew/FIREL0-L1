@@ -112,13 +112,13 @@ class ConfigFile(L0):
         """
         Parse self['Epoch'] and self['raw_data'] into meaning quantities
         """
-        self['data_type'] = self['raw_data'][:, 0]
-        self['packet_counter'] = self['raw_data'][:, 1]
-        self['cmd_reg_value'] = self['raw_data'][:, 2]
-        self['cntrl_reg'] = self['raw_data'][:, 3]
-        self['hi_res_interval'] = self['raw_data'][:, 4]
-        self['context_selection'] = self['raw_data'][:, 5]
-        self['mbp_selection'] = self['raw_data'][:, 6]
+        self['data_type'] = dm.dmarray(self['raw_data'][:, 0])
+        self['packet_counter'] = dm.dmarray(self['raw_data'][:, 1])
+        self['cmd_reg_value'] = dm.dmarray(self['raw_data'][:, 2])
+        self['cntrl_reg'] = dm.dmarray(self['raw_data'][:, 3])
+        self['hi_res_interval'] = dm.dmarray(self['raw_data'][:, 4])
+        self['context_selection'] = dm.dmarray(self['raw_data'][:, 5])
+        self['mbp_selection'] = dm.dmarray(self['raw_data'][:, 6])
         # this cycles through the registers so this needs to also
         self['control_register'] = fillArray((len(self['Epoch'])))
         self['det_max_energy_setpoint'] = fillArray((len(self['Epoch'])))
@@ -192,7 +192,7 @@ def fillArray(shape, fillval=-999, dtype=np.int):
     """
     dat = np.zeros(shape, dtype=dtype)
     dat[...] = fillval
-    return dat
+    return dm.dmarray(dat)
 
 def combineBytes(*args):
     """
