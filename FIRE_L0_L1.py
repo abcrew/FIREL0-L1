@@ -223,7 +223,7 @@ def determineFileType(filename):
 
 
 if __name__ == '__main__':
-    usage = "usage: %prog [options] infile outfile"
+    usage = "usage: %prog [options] infile [outfile]"
     parser = OptionParser(usage=usage)
 
     parser.add_option("-c", "--configfile",
@@ -243,13 +243,19 @@ if __name__ == '__main__':
                   help="Force an overwrite, default=False", default=False)
     (options, args) = parser.parse_args()
 
-    if len(args) != 2:
+    if len(args) < 1 or len(args) > 2:
         parser.error("incorrect number of arguments")
 
 #==============================================================================
 # check on the inputs
 #==============================================================================
     infile = args[0]
+    if len(args) == 1:
+        # build the default output filename
+        pth = os.path.abspath(os.path.dirname(infile))
+        name = os.path.splitext(os.path.basename(infile))[0]
+        name += '_L1.txt'
+        args.append(os.path.join(pth, name))
     outfile = args[1]
     if not os.path.isfile(os.path.expanduser(infile)):
         parser.error("file {0} not found".format(infile))
