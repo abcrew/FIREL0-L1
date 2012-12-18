@@ -79,7 +79,7 @@ class L0(dm.SpaceData):
         epoch = [dup.parse(v) for v in raw_data[:,0]]
         self['Epoch'] = dm.dmarray(epoch)
         # raw data is the rest
-        self['raw_data'] = raw_data[:,1:].astype(np.uint8)
+        self['raw_data'] = hexArrToInt(raw_data[:,1:])
 
     @abstractmethod
     def parseData(self):
@@ -198,6 +198,15 @@ def combineBytes(*args):
     ans = 0
     for i, val in enumerate(args):
         ans += (val << i*8) # 8 is the bits per number
+    return ans
+
+def hexArrToInt(inarr):
+    """
+    given a string hex array input convert to integers
+    """
+    ans = fillArray(inarr.shape, 0, dtype=np.uint8)
+    for ind, val in np.ndenumerate(inarr):
+        ans[ind] = int(val, 16)
     return ans
 
 def determineFileType(filename):

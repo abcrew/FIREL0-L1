@@ -38,6 +38,14 @@ class FunctionTests(unittest.TestCase):
         self.assertEqual(256, FIRE_L0_L1.combineBytes(0,1))
         self.assertEqual(65536, FIRE_L0_L1.combineBytes(0,0,1))
 
+    def test_hexArrToInt(self):
+        """hexArrToInt should work"""
+        ans = np.arange(12)
+        tst = np.asarray(['00', '01', '02', '03', '04', '05', '06', '07',
+                          '08', '09', '0a', '0b'])
+        np.testing.assert_array_equal(ans, FIRE_L0_L1.hexArrToInt(tst))
+
+
 # this bit o magic runs all the tests in the file
 if __name__ == "__main__":
     unittest.main()
