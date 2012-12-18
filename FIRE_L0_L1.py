@@ -38,19 +38,16 @@ class L0(dm.SpaceData):
             kwargs['delimiter'] = ' '
         if 'skiprows' not in kwargs:
             kwargs['skiprows'] = 0
-        df = open(self.filename, 'r')
-        #skip the header
-        for v in range(kwargs['skiprows']):
-            header = df.readline().strip()
-        raw_data = df.readlines()
+        raw_data = np.loadtxt(self.filename,
+                              dtype=str,
+                              delimiter=kwargs['delimiter'],
+                              skiprows=kwargs['skiprows'])
         #TODO there will be MSU timestanps and all on the lines from BIRD, those need to be looked at
-        raw_data = [v.strip() for v in raw_data]
-        raw_data = dm.dmarray([v.split(kwargs['delimiter']) for v in raw_data])
         # the epochs are the first column
         epoch = [dup.parse(v) for v in raw_data[:,0]]
-        self['Epoch'] = epoch
+        self['Epoch'] = dm.dmarray(epoch)
         # raw data is the rest
-        self['raw_data'] = raw_data[:,1:]
+        self['raw_data'] = raw_data[:,1:].astype(np.int)
 
     @abstractmethod
     def parseData(self):
