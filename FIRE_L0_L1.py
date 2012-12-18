@@ -8,6 +8,7 @@ Converter form the FIRE L0 packets to L1 data
 
 # standard library includes (alphabetical)
 from abc import ABCMeta, abstractmethod
+import datetime
 from optparse import OptionParser
 import os
 import re
@@ -101,6 +102,11 @@ class L0(dm.SpaceData):
         """
         # don't write out the raw data
         del self['raw_data']
+        self['Epoch'].attrs['FILL_VALUE'] = datetime.datetime(2000, 1, 1)
+        for key in self:
+            if key == 'Epoch':
+                continue
+            self[key].attrs['FILL_VALUE'] = -999
         dm.toJSONheadedASCII(self.outfilename, self, depend0='Epoch', order=['Epoch'])
 
 
@@ -122,19 +128,26 @@ class ConfigFile(L0):
         # this cycles through the registers so this needs to also
         self['control_register'] = fillArray((len(self['Epoch'])))
         self['det_max_energy_setpoint'] = fillArray((len(self['Epoch'])))
-        self['det_energy_setpoint_5'] = fillArray((len(self['Epoch'])))
-        self['det_energy_setpoint_4'] = fillArray((len(self['Epoch'])))
-        self['det_energy_setpoint_3'] = fillArray((len(self['Epoch'])))
-        self['det_energy_setpoint_2'] = fillArray((len(self['Epoch'])))
-        self['det_energy_setpoint_1'] = fillArray((len(self['Epoch'])))
-        self['det_energy_setpoint_0'] = fillArray((len(self['Epoch'])))
+        self['det_energy_setpoint'] = fillArray((len(self['Epoch']), 6))
         for key, reg in [('control_register', 0), ('det_max_energy_setpoint', 4),
-                         ('det_energy_setpoint_5', 5), ('det_energy_setpoint_4', 6),
-                         ('det_energy_setpoint_3', 7), ('det_energy_setpoint_2', 8),
-                         ('det_energy_setpoint_1', 9), ('det_energy_setpoint_0', 10)]:
+                         ('det_energy_setpoint', 5), ('det_energy_setpoint', 6),
+                         ('det_energy_setpoint', 7), ('det_energy_setpoint', 8),
+                         ('det_energy_setpoint', 9), ('det_energy_setpoint', 10)]:
             mask = (self['packet_counter'] & 0b00001111) == reg
-            self[key][mask] = self['cmd_reg_value'][mask]
-
+            if key in ('control_register', 'det_max_energy_setpoint'):
+                self[key][mask] = self['cmd_reg_value'][mask]
+            else:
+                self[key][mask,np.abs(10-reg)] = self['cmd_reg_value'][mask]
+        self['det_energy_setpoint'].attrs['DEPEND_0'] = 'Epoch'
+        self['det_energy_setpoint'].attrs['LABEL'] = 'setpoint'
+        self['det_energy_setpoint'].attrs['VALID_MIN'] = 0
+        self['det_energy_setpoint'].attrs['VALID_MAX'] = 255
+        self['det_energy_setpoint'].attrs['TYPICAL_MIN'] = 1
+        self['det_energy_setpoint'].attrs['TYPICAL_MAX'] = 255
+        self['det_energy_setpoint'].attrs['SCALE_TYPE'] = 'linear'
+        self['det_energy_setpoint'].attrs['VAR_TYPE'] = 'data'
+        self['det_energy_setpoint'].attrs['ELEMENT_LABELS'] = ['setpoint5', 'setpoint4', 'setpoint3', 'setpoint2', 'setpoint1', 'setpoint0']
+        self['det_energy_setpoint'].attrs['TITLE'] = 'FIREBIRD Energy Setpoints'
 
 
 class MBPFile(L0):
@@ -165,8 +178,19 @@ class ContextFile(L0):
         """
         cxt0 = self['raw_data'][:, :3]
         cxt1 = self['raw_data'][:, 3:]
-        self['context0'] = dm.dmarray(combineBytes(cxt0[:, 0], cxt0[:, 1], cxt0[:, 2]))
-        self['context1'] = dm.dmarray(combineBytes(cxt1[:, 0], cxt1[:, 1], cxt1[:, 2]))
+        cxt0 = combineBytes(cxt0[:, 0], cxt0[:, 1], cxt0[:, 2])
+        cxt1 = combineBytes(cxt1[:, 0], cxt1[:, 1], cxt1[:, 2])
+        self['context'] = dm.dmarray(np.vstack((cxt0, cxt1)).transpose())
+        self['context'].attrs['DEPEND_0'] = 'Epoch'
+        self['context'].attrs['LABEL'] = 'counts'
+        self['context'].attrs['VALID_MIN'] = 0
+        self['context'].attrs['VALID_MAX'] = 16777216
+        self['context'].attrs['TYPICAL_MIN'] = 1
+        self['context'].attrs['TYPICAL_MAX'] = 1e6
+        self['context'].attrs['SCALE_TYPE'] = 'log'
+        self['context'].attrs['VAR_TYPE'] = 'data'
+        self['context'].attrs['ELEMENT_LABELS'] = ['Context0', 'Context1']
+        self['context'].attrs['TITLE'] = 'FIREBIRD Context Data'
 
 
 class HiResFile(L0):
@@ -184,6 +208,27 @@ class HiResFile(L0):
         for chan, ii in enumerate((range(0, 12, 2))):
             self['hr0'][:, chan] = combineBytes(hr0[:, ii], hr0[:,ii+1])
             self['hr1'][:, chan] = combineBytes(hr1[:, ii], hr1[:,ii+1])
+
+        self['hr0'].attrs['DEPEND_0'] = 'Epoch'
+        self['hr0'].attrs['LABEL'] = 'counts'
+        self['hr0'].attrs['VALID_MIN'] = 0
+        self['hr0'].attrs['VALID_MAX'] = 2**16
+        self['hr0'].attrs['TYPICAL_MIN'] = 1
+        self['hr0'].attrs['TYPICAL_MAX'] = 2**16
+        self['hr0'].attrs['SCALE_TYPE'] = 'log'
+        self['hr0'].attrs['VAR_TYPE'] = 'data'
+        self['hr0'].attrs['ELEMENT_LABELS'] = ['Bin0-0', 'Bin0-1', 'Bin0-2', 'Bin0-3', 'Bin0-4', 'Bin0-5']
+        self['hr0'].attrs['TITLE'] = 'FIREBIRD Hi-rate Det 0'
+        self['hr1'].attrs['DEPEND_0'] = 'Epoch'
+        self['hr1'].attrs['LABEL'] = 'counts'
+        self['hr1'].attrs['VALID_MIN'] = 0
+        self['hr1'].attrs['VALID_MAX'] = 2**16
+        self['hr1'].attrs['TYPICAL_MIN'] = 1
+        self['hr1'].attrs['TYPICAL_MAX'] = 2**16
+        self['hr1'].attrs['SCALE_TYPE'] = 'log'
+        self['hr1'].attrs['VAR_TYPE'] = 'data'
+        self['hr1'].attrs['ELEMENT_LABELS'] = ['Bin1-0', 'Bin1-1', 'Bin1-2', 'Bin1-3', 'Bin1-4', 'Bin1-5']
+        self['hr1'].attrs['TITLE'] = 'FIREBIRD Hi-rate Det 1'
 
 
 def fillArray(shape, fillval=-999, dtype=np.int):
