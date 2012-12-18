@@ -5,7 +5,7 @@ Code to process FIRE L0 data to L1
 
 Purpose
 =======
-Convert the ASCII hex values form MSU into meaning data
+Convert the ASCII hex values form MSU into meaningful data
 
 Thoughts
 --------
@@ -17,6 +17,6 @@ Requirements
 ------------
 Add things here as requirements are added to the L0-L1
 
-# Spacepy
-# numpy
-# python 2.6 or 2.7
+# spacepy >=1.4 (http://spacepy.lanl.gov/)
+# numpy  (http://www.numpy.org/)
+# python 2.6 or 2.7 (http://www.python.org/)

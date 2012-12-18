@@ -68,7 +68,7 @@ class L0(dm.SpaceData):
         read in the data file and return a list of the line sin the file
         """
         if 'delimiter' not in kwargs:
-            kwargs['delimiter'] = ' '
+            kwargs['delimiter'] = ', '
         if 'skiprows' not in kwargs:
             kwargs['skiprows'] = 0
         raw_data = np.loadtxt(self.filename,
@@ -79,7 +79,7 @@ class L0(dm.SpaceData):
         epoch = [dup.parse(v) for v in raw_data[:,0]]
         self['Epoch'] = dm.dmarray(epoch)
         # raw data is the rest
-        self['raw_data'] = raw_data[:,1:].astype(np.int)
+        self['raw_data'] = raw_data[:,1:].astype(np.uint8)
 
     @abstractmethod
     def parseData(self):
