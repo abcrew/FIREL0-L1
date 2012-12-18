@@ -2,7 +2,7 @@
 """
 FIRE_L0_L1.py
 
-Convertor form the FIRE L0 packets to L1 data
+Converter form the FIRE L0 packets to L1 data
 
 """
 
@@ -10,6 +10,7 @@ Convertor form the FIRE L0 packets to L1 data
 from abc import ABCMeta, abstractmethod
 from optparse import OptionParser
 import os
+import re
 
 # dependency includes (alphabetical)
 import dateutil.parser as dup
@@ -58,17 +59,20 @@ class L0(dm.SpaceData):
         """
         given a filename read in the data
         """
+        # have to call __init__ for SpaceData also
+        super(L0, self).__init__()
         self.outfilename = outfilename
         self.filename = filename
         self.readL0()
-        self.writeFile(self.outfilename)
+        self.parseData()
+        self.writeFile()
 
     def readL0(self, **kwargs):
         """
         read in the data file and return a list of the line sin the file
         """
         if 'delimiter' not in kwargs:
-            kwargs['delimiter'] = ', '
+            kwargs['delimiter'] = ','
         if 'skiprows' not in kwargs:
             kwargs['skiprows'] = 0
         raw_data = np.loadtxt(self.filename,
@@ -79,7 +83,10 @@ class L0(dm.SpaceData):
         epoch = [dup.parse(v) for v in raw_data[:,0]]
         self['Epoch'] = dm.dmarray(epoch)
         # raw data is the rest
-        self['raw_data'] = hexArrToInt(raw_data[:,1:])
+        ## often the last column is all '' if so we don't want it
+        if (raw_data[:,-1] == '').all():
+            raw_data = np.delete(raw_data, -1, -1)
+        self['raw_data'] = raw_data[:,1:].astype(np.uint8)
 
     @abstractmethod
     def parseData(self):
@@ -90,9 +97,9 @@ class L0(dm.SpaceData):
 
     def writeFile(self):
         """
-        write out the data to a json headed ASCII file thi is a L1 file!!
+        write out the data to a json headed ASCII file this is a L1 file!!
         """
-        # don't write ou the raw data
+        # don't write out the raw data
         del self['raw_data']
         dm.toJSONheadedASCII(self.outfilename, self, depend0='Epoch', order=['Epoch'])
 
@@ -158,11 +165,8 @@ class ContextFile(L0):
         """
         cxt0 = self['raw_data'][:, :3]
         cxt1 = self['raw_data'][:, 3:]
-        self['context0'] = fillArray( (len(self['Epoch']) ) )
-        self['context1'] = fillArray( (len(self['Epoch']) ) )
-        for chan, ii in enumerate((range(0, 6, 3))):
-            self['context0'][:, chan] = combineBytes(cxt0[:, ii], cxt0[:,ii+1])
-            self['context1'][:, chan] = combineBytes(cxt1[:, ii], cxt1[:,ii+1])
+        self['context0'] = dm.dmarray(combineBytes(cxt0[:, 0], cxt0[:, 1], cxt0[:, 2]))
+        self['context1'] = dm.dmarray(combineBytes(cxt1[:, 0], cxt1[:, 1], cxt1[:, 2]))
 
 
 class HiResFile(L0):
@@ -200,26 +204,26 @@ def combineBytes(*args):
         ans += (val << i*8) # 8 is the bits per number
     return ans
 
-def hexArrToInt(inarr):
-    """
-    given a string hex array input convert to integers
-    """
-    ans = fillArray(inarr.shape, 0, dtype=np.uint8)
-    for ind, val in np.ndenumerate(inarr):
-        ans[ind] = int(val, 16)
-    return ans
-
 def determineFileType(filename):
     """
     given a filename figure out what type of file this is
     """
-    raise(NotImplementedError("Have to see the filename convention first"))
-    # use an Re to match the filename convertion and returtn one of
+    # use an Re to match the filename convention and return one of
     ## 'configfile', 'mbpfile', 'contextfile', 'hiresfile' or ValueError
+    if re.match(r'^.*ContextData.*$', filename):
+        return 'contextfile'
+    elif re.match(r'^.*Config.*$', filename):
+        return 'configfile'
+    elif re.match(r'^.*BurstData.*$', filename):
+        return 'mbpfile'
+    elif re.match(r'^.*HiResData.*$', filename):
+        return 'hiresfile'
+    else:
+        raise(ValueError('No Match'))
 
 
 if __name__ == '__main__':
-    usage = "usage: %prog [options] infile ooutfile"
+    usage = "usage: %prog [options] infile outfile"
     parser = OptionParser(usage=usage)
 
     parser.add_option("-c", "--configfile",
@@ -231,12 +235,12 @@ if __name__ == '__main__':
     parser.add_option("-x", "--contextfile",
                   action="store_true", dest="contextfile",
                   help="This is a context file reading in", default=False)
-    parser.add_option("-h", "--hiresfile",
+    parser.add_option("-H", "--hiresfile",
                   action="store_true", dest="hiresfile",
                   help="This is a Hi-Res file reading in", default=False)
     parser.add_option("-f", "--force",
                   action="store_true", dest="force",
-                  help="Force an overwrite, defualt=False", default=False)
+                  help="Force an overwrite, default=False", default=False)
     (options, args) = parser.parse_args()
 
     if len(args) != 2:
@@ -255,10 +259,10 @@ if __name__ == '__main__':
 #==============================================================================
 # deal with the filetype options
 #==============================================================================
-    if sum(options.configfile, options.mbpfile, options.contextfile, options.hiresfile) > 1:
+    if sum( (options.configfile, options.mbpfile, options.contextfile, options.hiresfile) ) > 1:
         parser.error("File type flags are mutually exclusive")
     # if none specified then try and guess
-    if sum(options.configfile, options.mbpfile, options.contextfile, options.hiresfile) == 0:
+    if sum( (options.configfile, options.mbpfile, options.contextfile, options.hiresfile) ) == 0:
         try:
             tp = determineFileType(infile)
             if tp == 'configfile':
