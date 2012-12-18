@@ -76,13 +76,13 @@ class ConfigFile(L0):
         """
         Parse self['Epoch'] and self['raw_data'] into meaning quantities
         """
-        self['data_type'] = self['raw_data'][:,0]
-        self['packet_counter'] = self['raw_data'][:,1]
-        self['cmd_reg_value'] = self['raw_data'][:,2]
-        self['cntrl_reg'] = self['raw_data'][:,3]
-        self['hi_res_interval'] = self['raw_data'][:,4]
-        self['context selection'] = self['raw_data'][:,5]
-        self['mbp_selection'] = self['raw_data'][:,6]
+        self['data_type'] = self['raw_data'][:, 0]
+        self['packet_counter'] = self['raw_data'][:, 1]
+        self['cmd_reg_value'] = self['raw_data'][:, 2]
+        self['cntrl_reg'] = self['raw_data'][:, 3]
+        self['hi_res_interval'] = self['raw_data'][:, 4]
+        self['context selection'] = self['raw_data'][:, 5]
+        self['mbp_selection'] = self['raw_data'][:, 6]
 
 
 class MBPFile(L0):
@@ -93,10 +93,15 @@ class MBPFile(L0):
         """
         Parse self['Epoch'] and self['raw_data'] into meaning quantities
         """
-        self['MB0_100'] = self['raw_data'][:,0:2]
-        self['MB0_500'] = self['raw_data'][:,2:5]
-        self['MB1_100'] = self['raw_data'][:,5:7]
-        self['MB1_500'] = self['raw_data'][:,7:10]
+        #TODO need to combine these into one number
+        MB0_100 = self['raw_data'][:,0:2]
+        MB0_500 = self['raw_data'][:,2:5]
+        MB1_100 = self['raw_data'][:,5:7]
+        MB1_500 = self['raw_data'][:,7:10]
+        self['MB0_100'] = combineBytes(MB0_100[:,0],  MB0_100[:,1])
+        self['MB0_500'] = combineBytes(MB0_500[:,0],  MB0_500[:,1], MB0_500[:,2])
+        self['MB1_100'] = combineBytes(MB1_100[:,0],  MB1_100[:,1])
+        self['MB1_500'] = combineBytes(MB1_500[:,0],  MB1_500[:,1], MB1_500[:,2])
 
 
 class ContextFile(L0):
@@ -107,7 +112,14 @@ class ContextFile(L0):
         """
         Parse self['Epoch'] and self['raw_data'] into meaning quantities
         """
-        self['context'] = self['raw_data'][...]
+        #TODO need to combine these into one number
+        cxt0 = self['raw_data'][:, :3]
+        cxt1 = self['raw_data'][:, 3:]
+        self['context0'] = fillArray( (len(self['Epoch']) ) )
+        self['context1'] = fillArray( (len(self['Epoch']) ) )
+        for chan, ii in enumerate((range(0, 6, 3))):
+            self['context0'][:, chan] = combineBytes(cxt0[:, ii], cxt0[:,ii+1])
+            self['context1'][:, chan] = combineBytes(cxt1[:, ii], cxt1[:,ii+1])
 
 
 class HiResFile(L0):
@@ -118,7 +130,33 @@ class HiResFile(L0):
         """
         Parse self['Epoch'] and self['raw_data'] into meaning quantities
         """
-        self['hr'] = self['raw_data'][...]
+        hr0 = self['raw_data'][:,0:12]
+        hr1 = self['raw_data'][:,12:]
+        self['hr0'] = fillArray( (len(self['Epoch']), 6) )
+        self['hr1'] = fillArray( (len(self['Epoch']), 6) )
+        for chan, ii in enumerate((range(0, 12, 2))):
+            self['hr0'][:, chan] = combineBytes(hr0[:, ii], hr0[:,ii+1])
+            self['hr1'][:, chan] = combineBytes(hr1[:, ii], hr1[:,ii+1])
+
+
+def fillArray(shape, fillval=-999, dtype=np.int):
+    """
+    create an array of given shape and type filled with fill
+    """
+    dat = np.zeros(shape, dtype=dtype)
+    dat[...] = fillval
+    return dat
+
+def combineBytes(*args):
+    """
+    given the bytes of a multi byte number combine into one
+    pass them in least to most significant
+    """
+    ans = 0
+    for i, val in enumerate(args):
+        ans += (val << i*8) # 8 is the bits per number
+    return ans
+
 
 
 
