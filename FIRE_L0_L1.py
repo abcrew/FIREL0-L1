@@ -8,10 +8,44 @@ Convertor form the FIRE L0 packets to L1 data
 
 # standard library includes (alphabetical)
 from abc import ABCMeta, abstractmethod
+from optparse import OptionParser
+import os
+
 # dependency includes (alphabetical)
 import dateutil.parser as dup
 import numpy as np
 import spacepy.datamodel as dm
+
+
+"""
+FIRE ICD definitions by byte:
+    0: Data type
+    1: Packet Counter
+    2: Cmd Reg val
+    3: Cntrl Reg
+    4: Hi-res Interval
+    5: Context Selection
+    6: MBP Selection
+    7: 0
+    8-9: MB0 (100ms)
+    10-12: MBO (500ms)
+    13-14: MB1 (100ms)
+    15-17: MB1 (500ms)
+    18-20: C0
+    21-23: C1
+    24-25: HR0
+    26-27: HR1
+    28-29: HR2
+    30-31: HR3
+    32-33: HR4
+    34-35: HR5
+    36-37: HR6
+    38-39: HR7
+    40-41: HR8
+    42-43: HR9
+    44-45: HR10
+    46-47: HR11
+"""
 
 
 class L0(dm.SpaceData):
@@ -166,39 +200,83 @@ def combineBytes(*args):
         ans += (val << i*8) # 8 is the bits per number
     return ans
 
+def determineFileType(filename):
+    """
+    given a filename figure out what type of file this is
+    """
+    raise(NotImplementedError("Have to see the filename convention first"))
+    # use an Re to match the filename convertion and returtn one of
+    ## 'configfile', 'mbpfile', 'contextfile', 'hiresfile' or ValueError
 
 
+if __name__ == '__main__':
+    usage = "usage: %prog [options] infile ooutfile"
+    parser = OptionParser(usage=usage)
 
-"""
-FIRE ICD definitions by byte:
-    0: Data type
-    1: Packet Counter
-    2: Cmd Reg val
-    3: Cntrl Reg
-    4: Hi-res Interval
-    5: Context Selection
-    6: MBP Selection
-    7: 0
-    8-9: MB0 (100ms)
-    10-12: MBO (500ms)
-    13-14: MB1 (100ms)
-    15-17: MB1 (500ms)
-    18-20: C0
-    21-23: C1
-    24-25: HR0
-    26-27: HR1
-    28-29: HR2
-    30-31: HR3
-    32-33: HR4
-    34-35: HR5
-    36-37: HR6
-    38-39: HR7
-    40-41: HR8
-    42-43: HR9
-    44-45: HR10
-    46-47: HR11
-"""
+    parser.add_option("-c", "--configfile",
+                  action="store_true", dest="configfile",
+                  help="This is a config file reading in", default=False)
+    parser.add_option("-m", "--mbpfile",
+                  action="store_true", dest="mbpfile",
+                  help="This is a MBP file reading in", default=False)
+    parser.add_option("-x", "--contextfile",
+                  action="store_true", dest="contextfile",
+                  help="This is a context file reading in", default=False)
+    parser.add_option("-h", "--hiresfile",
+                  action="store_true", dest="hiresfile",
+                  help="This is a Hi-Res file reading in", default=False)
+    parser.add_option("-f", "--force",
+                  action="store_true", dest="force",
+                  help="Force an overwrite, defualt=False", default=False)
+    (options, args) = parser.parse_args()
+
+    if len(args) != 2:
+        parser.error("incorrect number of arguments")
+
+#==============================================================================
+# check on the inputs
+#==============================================================================
+    infile = args[0]
+    outfile = args[1]
+    if not os.path.isfile(os.path.expanduser(infile)):
+        parser.error("file {0} not found".format(infile))
+    if os.path.isfile(os.path.expanduser(outfile)) and not options.force:
+        parser.error("file {0} found and will not overwrite".format(outfile))
+
+#==============================================================================
+# deal with the filetype options
+#==============================================================================
+    if sum(options.configfile, options.mbpfile, options.contextfile, options.hiresfile) > 1:
+        parser.error("File type flags are mutually exclusive")
+    # if none specified then try and guess
+    if sum(options.configfile, options.mbpfile, options.contextfile, options.hiresfile) == 0:
+        try:
+            tp = determineFileType(infile)
+            if tp == 'configfile':
+                options.configfile = True
+            elif tp == 'mbpfile':
+                options.mbpfile = True
+            elif tp == 'contextfile':
+                options.contextfile = True
+            elif tp == 'hiresfile':
+                options.hiresfile = True
+            else:
+                raise(ValueError())
+        except (ValueError, NotImplementedError):
+            # could not determine the type, die
+            parser.error("Could not determine the file type and flag not given")
 
 
+    if options.configfile:
+        ConfigFile(infile, outfile)
+    elif options.mbpfile:
+        MBPFile(infile, outfile)
+    elif options.contextfile:
+        ContextFile(infile, outfile)
+    elif options.hiresfile:
+        HiResFile(infile, outfile)
+    else:
+        raise(RuntimeError('How did we get here?  Programming error'))
+    print('Wrote {0}'.format(outfile))
 
 
