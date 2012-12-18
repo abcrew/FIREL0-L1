@@ -15,7 +15,7 @@ import numpy as np
 import FIRE_L0_L1
 
 # class name go in here
-__all__ = ['FunctionTests']
+__all__ = ['FunctionTests', 'ClassTests']
 
 # tests are grouped into classes this way
 class FunctionTests(unittest.TestCase):
