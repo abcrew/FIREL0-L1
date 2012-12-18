@@ -76,8 +76,24 @@ class ConfigFile(L0):
         self['cmd_reg_value'] = self['raw_data'][:, 2]
         self['cntrl_reg'] = self['raw_data'][:, 3]
         self['hi_res_interval'] = self['raw_data'][:, 4]
-        self['context selection'] = self['raw_data'][:, 5]
+        self['context_selection'] = self['raw_data'][:, 5]
         self['mbp_selection'] = self['raw_data'][:, 6]
+        # this cycles through the registers so this needs to also
+        self['control_register'] = fillArray((len(self['Epoch'])))
+        self['det_max_energy_setpoint'] = fillArray((len(self['Epoch'])))
+        self['det_energy_setpoint_5'] = fillArray((len(self['Epoch'])))
+        self['det_energy_setpoint_4'] = fillArray((len(self['Epoch'])))
+        self['det_energy_setpoint_3'] = fillArray((len(self['Epoch'])))
+        self['det_energy_setpoint_2'] = fillArray((len(self['Epoch'])))
+        self['det_energy_setpoint_1'] = fillArray((len(self['Epoch'])))
+        self['det_energy_setpoint_0'] = fillArray((len(self['Epoch'])))
+        for key, reg in [('control_register', 0), ('det_max_energy_setpoint', 4),
+                         ('det_energy_setpoint_5', 5), ('det_energy_setpoint_4', 6),
+                         ('det_energy_setpoint_3', 7), ('det_energy_setpoint_2', 8),
+                         ('det_energy_setpoint_1', 9), ('det_energy_setpoint_0', 10)]:
+            mask = (self['packet_counter'] & 0b00001111) == reg
+            self[key][mask] = self['cmd_reg_value'][mask]
+
 
 
 class MBPFile(L0):
