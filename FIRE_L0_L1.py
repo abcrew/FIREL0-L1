@@ -8,7 +8,6 @@ Convertor form the FIRE L0 packets to L1 data
 
 # standard library includes (alphabetical)
 from abc import ABCMeta, abstractmethod
-import datetime
 # dependency includes (alphabetical)
 import dateutil.parser as dup
 import numpy as np
@@ -42,7 +41,6 @@ class L0(dm.SpaceData):
                               dtype=str,
                               delimiter=kwargs['delimiter'],
                               skiprows=kwargs['skiprows'])
-        #TODO there will be MSU timestanps and all on the lines from BIRD, those need to be looked at
         # the epochs are the first column
         epoch = [dup.parse(v) for v in raw_data[:,0]]
         self['Epoch'] = dm.dmarray(epoch)
@@ -58,7 +56,7 @@ class L0(dm.SpaceData):
 
     def writeFile(self):
         """
-        write out the data to a json headed ASCII file
+        write out the data to a json headed ASCII file thi is a L1 file!!
         """
         # don't write ou the raw data
         del self['raw_data']
@@ -90,7 +88,6 @@ class MBPFile(L0):
         """
         Parse self['Epoch'] and self['raw_data'] into meaning quantities
         """
-        #TODO need to combine these into one number
         MB0_100 = self['raw_data'][:,0:2]
         MB0_500 = self['raw_data'][:,2:5]
         MB1_100 = self['raw_data'][:,5:7]
@@ -109,7 +106,6 @@ class ContextFile(L0):
         """
         Parse self['Epoch'] and self['raw_data'] into meaning quantities
         """
-        #TODO need to combine these into one number
         cxt0 = self['raw_data'][:, :3]
         cxt1 = self['raw_data'][:, 3:]
         self['context0'] = fillArray( (len(self['Epoch']) ) )
