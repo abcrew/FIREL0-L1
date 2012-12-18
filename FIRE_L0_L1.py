@@ -27,7 +27,7 @@ class L0(dm.SpaceData):
         """
         self.outfilename = outfilename
         self.filename = filename
-        self._readL0()
+        self.readL0()
         self.writeFile(self.outfilename)
 
     def readL0(self, **kwargs):
