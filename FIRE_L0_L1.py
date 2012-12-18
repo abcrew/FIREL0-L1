@@ -149,10 +149,10 @@ class MBPFile(L0):
         MB0_500 = self['raw_data'][:,2:5]
         MB1_100 = self['raw_data'][:,5:7]
         MB1_500 = self['raw_data'][:,7:10]
-        self['MB0_100'] = combineBytes(MB0_100[:,0],  MB0_100[:,1])
-        self['MB0_500'] = combineBytes(MB0_500[:,0],  MB0_500[:,1], MB0_500[:,2])
-        self['MB1_100'] = combineBytes(MB1_100[:,0],  MB1_100[:,1])
-        self['MB1_500'] = combineBytes(MB1_500[:,0],  MB1_500[:,1], MB1_500[:,2])
+        self['MB0_100'] = dm.dmarray(combineBytes(MB0_100[:,0],  MB0_100[:,1]))
+        self['MB0_500'] = dm.dmarray(combineBytes(MB0_500[:,0],  MB0_500[:,1], MB0_500[:,2]))
+        self['MB1_100'] = dm.dmarray(combineBytes(MB1_100[:,0],  MB1_100[:,1]))
+        self['MB1_500'] = dm.dmarray(combineBytes(MB1_500[:,0],  MB1_500[:,1], MB1_500[:,2]))
 
 
 class ContextFile(L0):

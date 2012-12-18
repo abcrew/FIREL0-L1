@@ -79,6 +79,16 @@ class ClassTests(unittest.TestCase):
             self.assertEqual('#{', dat[0][0:2])
             self.assertEqual('2012-12-17T22:18:48.553000 4 255 165 -999 5 -999 -999 -999 -999 -999 -999 -999 4 165 81', dat[-1].strip())
 
+    def test_MBPFile(self):
+        """a mbp file shold read in and write out"""
+        FIRE_L0_L1.MBPFile('test_data/BurstData.csv', self.tmpfile)
+        self.assertTrue(os.path.isfile(self.tmpfile))
+        with open(self.tmpfile, 'r') as fp:
+            dat = fp.readlines()
+            self.assertEqual('#{', dat[0][0:2])
+            self.assertEqual('2012-12-17T22:18:57.053000 2 4 26 130', dat[-1].strip())
+
+
 # this bit o magic runs all the tests in the file
 if __name__ == "__main__":
     unittest.main()
