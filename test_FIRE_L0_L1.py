@@ -24,8 +24,19 @@ class FunctionTests(unittest.TestCase):
         super(FunctionTests, self).tearDown()
 
     # a test is a method that starts with the letters 'test'
+    def test_fillArray(self):
+        """fillArray should do as we expect"""
+        np.testing.assert_array_equal(np.zeros((10,2)), FIRE_L0_L1.fillArray((10,2), fillval=0))
+        val = np.zeros((10,2))
+        val[...] = -999
+        # regression on default
+        np.testing.assert_array_equal(val, FIRE_L0_L1.fillArray((10,2)))
 
-
+    def test_combineBytes(self):
+        """combineBytes should provide known answers"""
+        self.assertEqual(0, FIRE_L0_L1.combineBytes(0,0,0,0,0))
+        self.assertEqual(256, FIRE_L0_L1.combineBytes(0,1))
+        self.assertEqual(65536, FIRE_L0_L1.combineBytes(0,0,1))
 
 # this bit o magic runs all the tests in the file
 if __name__ == "__main__":
