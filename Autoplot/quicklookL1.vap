@@ -36,45 +36,45 @@
                 <property class="Row" length="6" name="rows">
                     <Row id="row_11">
                         <property default="+100%-2em" name="bottom"
-                            type="String" value="17.50%-0.9em"/>
+                            type="String" value="18.20%-0.9em"/>
                         <property default="" name="parent" type="String" value="marginRow_0"/>
                         <property default="+2em" name="top"
                             type="String" value="+2.0em"/>
                     </Row>
                     <Row id="row_13">
                         <property default="+100%-2em" name="bottom"
-                            type="String" value="31.70%-0.9em"/>
+                            type="String" value="33.10%-0.9em"/>
                         <property default="" name="parent" type="String" value="marginRow_0"/>
                         <property default="+2em" name="top"
-                            type="String" value="17.50%"/>
+                            type="String" value="18.20%"/>
                     </Row>
                     <Row id="row_19">
                         <property default="+100%-2em" name="bottom"
-                            type="String" value="48.00%-2.4em"/>
+                            type="String" value="50.10%-2.4em"/>
                         <property default="" name="parent" type="String" value="marginRow_0"/>
                         <property default="+2em" name="top"
-                            type="String" value="31.70%"/>
+                            type="String" value="33.10%"/>
                     </Row>
                     <Row id="row_15">
                         <property default="+100%-2em" name="bottom"
-                            type="String" value="62.10%-0.9em"/>
+                            type="String" value="64.90%-0.9em"/>
                         <property default="" name="parent" type="String" value="marginRow_0"/>
                         <property default="+2em" name="top"
-                            type="String" value="48.00%"/>
+                            type="String" value="50.10%"/>
                     </Row>
                     <Row id="row_21">
                         <property default="+100%-2em" name="bottom"
-                            type="String" value="83.20%-2.4em"/>
+                            type="String" value="82.80%-2.4em"/>
                         <property default="" name="parent" type="String" value="marginRow_0"/>
                         <property default="+2em" name="top"
-                            type="String" value="62.10%+3.0em"/>
+                            type="String" value="64.90%"/>
                     </Row>
                     <Row id="row_17">
                         <property default="+100%-2em" name="bottom"
                             type="String" value="100.00%-4.2em"/>
                         <property default="" name="parent" type="String" value="marginRow_0"/>
                         <property default="+2em" name="top"
-                            type="String" value="83.20%"/>
+                            type="String" value="82.80%"/>
                     </Row>
                 </property>
                 <property default="640" name="width" type="Integer" value="1063"/>
@@ -3400,7 +3400,8 @@
                 <property name="context" type="datumRange">
                     <datumRange units="us2000" value="2012-12-17 22:12:50 to 22:18:50"/>
                 </property>
-                <property name="displayTitle" type="Boolean" value="true"/>
+                <property default="true" name="displayTitle"
+                    type="Boolean" value="false"/>
                 <property name="isotropic" type="Boolean" value="false"/>
                 <property name="legendPosition"
                     type="enum:org.das2.graph.LegendPosition" value="NE"/>
