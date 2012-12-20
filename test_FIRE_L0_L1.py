@@ -63,7 +63,7 @@ class ClassTests(unittest.TestCase):
 
     def test_ContextFile(self):
         """a context file shold read in and write out"""
-        FIRE_L0_L1.ContextFile('test_data/ContextData.csv', self.tmpfile)
+        FIRE_L0_L1.ContextFile(os.path.join('test_data', 'ContextData.csv'), self.tmpfile)
         self.assertTrue(os.path.isfile(self.tmpfile))
         with open(self.tmpfile, 'r') as fp:
             dat = fp.readlines()
@@ -72,7 +72,7 @@ class ClassTests(unittest.TestCase):
 
     def test_ConfigFile(self):
         """a context file shold read in and write out"""
-        FIRE_L0_L1.ConfigFile('test_data/Config.csv', self.tmpfile)
+        FIRE_L0_L1.ConfigFile(os.path.join('test_data', 'Config.csv'), self.tmpfile)
         self.assertTrue(os.path.isfile(self.tmpfile))
         with open(self.tmpfile, 'r') as fp:
             dat = fp.readlines()
@@ -81,7 +81,7 @@ class ClassTests(unittest.TestCase):
 
     def test_MBPFile(self):
         """a mbp file shold read in and write out"""
-        FIRE_L0_L1.MBPFile('test_data/BurstData.csv', self.tmpfile)
+        FIRE_L0_L1.MBPFile(os.path.join('test_data', 'BurstData.csv'), self.tmpfile)
         self.assertTrue(os.path.isfile(self.tmpfile))
         with open(self.tmpfile, 'r') as fp:
             dat = fp.readlines()
@@ -90,7 +90,7 @@ class ClassTests(unittest.TestCase):
 
     def test_HiResFile(self):
         """a hi-res file shold read in and write out"""
-        FIRE_L0_L1.HiResFile('test_data/HiResData.csv', self.tmpfile)
+        FIRE_L0_L1.HiResFile(os.path.join('test_data', 'HiResData.csv'), self.tmpfile)
         self.assertTrue(os.path.isfile(self.tmpfile))
         with open(self.tmpfile, 'r') as fp:
             dat = fp.readlines()
