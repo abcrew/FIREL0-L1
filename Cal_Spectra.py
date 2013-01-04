@@ -13,13 +13,10 @@ import itertools
 import getpass
 from optparse import OptionParser
 import os
-import re
 
 # dependency includes (alphabetical)
-import dateutil.parser as dup
 import numpy as np
 import spacepy.datamodel as dm
-import spacepy.toolbox as tb
 
 config = dm.SpaceData()
 hires  = dm.SpaceData()
