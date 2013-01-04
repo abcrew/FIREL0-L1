@@ -219,7 +219,8 @@ def plot(filename):
     ax.set_xticks(range(0, 256+1, 16))
     ax.set_xlabel(output['Channel'].attrs['LABEL'])
     ax.set_ylabel(output['Detector0'].attrs['LABEL'])
-    ax.set_title(output['Detector0'].attrs['TITLE'])
+    ax.set_title(output['Detector0'].attrs['TITLE'] + '\n' +
+                hires['Epoch'][0] + ' -- ' + hires['Epoch'][-1])
 
     ax.text(255, ax.get_ylim()[1], '\n'.join(data.keys()), rotation=-90,
             horizontalalignment='right', verticalalignment='top',
