@@ -329,7 +329,7 @@ if __name__ == '__main__':
                 raise(ValueError())
         except (ValueError, NotImplementedError):
             # could not determine the type, die
-            parser.error("Could not determine the file type and flag not given")
+            parser.error("Could not determine the file type and flag not given: {0}".format(infile))
 
 
     if options.configfile:

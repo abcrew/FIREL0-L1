@@ -209,7 +209,9 @@ def plot(filename):
 
     fig = plt.figure(figsize=(11, 8.5))
     ax = fig.add_subplot(111)
+    ax.semilogy(output['Channel'], output['Detector0'], 'g.', lw=2)
     ax.semilogy(output['Channel'], output['Detector0'], 'g', lw=2, label=output['Detector0'].attrs['ELEMENT_LABELS'][0])
+    ax.semilogy(output['Channel'], output['Detector1'], 'b.', lw=2)
     ax.semilogy(output['Channel'], output['Detector1'], 'b', lw=2, label=output['Detector1'].attrs['ELEMENT_LABELS'][0])
     ax.legend(fancybox=True, shadow=True, loc='upper left')
     ax.set_axisbelow(True)
