@@ -85,37 +85,37 @@
             <DataSourceFilter id="data_5">
                 <property name="fill" type="String" value=""/>
                 <property name="filters" type="String" value=""/>
-                <property default="" name="uri" type="String" value="vap+txt:file:/Users/balarsen/svnhome/FIREL0-L1/test_data/Config_L1.txt?depend0=Epoch&amp;column=det_energy_setpoint"/>
+                <property default="" name="uri" type="String" value="vap+txt:file:/Users/balarsen/svnhome/FIREL0-L1/test_data/2Jan2013/Config_L1.txt?depend0=Epoch&amp;column=det_energy_setpoint"/>
                 <property name="validRange" type="String" value=""/>
             </DataSourceFilter>
             <DataSourceFilter id="data_6">
                 <property name="fill" type="String" value=""/>
                 <property name="filters" type="String" value=""/>
-                <property default="" name="uri" type="String" value="vap+txt:file:/Users/balarsen/svnhome/FIREL0-L1/test_data/ContextData_L1.txt?depend0=Epoch&amp;column=context"/>
+                <property default="" name="uri" type="String" value="vap+txt:file:/Users/balarsen/svnhome/FIREL0-L1/test_data/2Jan2013/ContextData_L1.txt?depend0=Epoch&amp;column=context"/>
                 <property name="validRange" type="String" value=""/>
             </DataSourceFilter>
             <DataSourceFilter id="data_7">
                 <property name="fill" type="String" value=""/>
                 <property name="filters" type="String" value=""/>
-                <property default="" name="uri" type="String" value="vap+txt:file:/Users/balarsen/svnhome/FIREL0-L1/test_data/HiResData_L1.txt?depend0=Epoch&amp;column=hr0"/>
+                <property default="" name="uri" type="String" value="vap+txt:file:/Users/balarsen/svnhome/FIREL0-L1/test_data/2Jan2013/HiResData_L1.txt?depend0=Epoch&amp;column=hr0"/>
                 <property name="validRange" type="String" value=""/>
             </DataSourceFilter>
             <DataSourceFilter id="data_8">
                 <property name="fill" type="String" value=""/>
                 <property name="filters" type="String" value=""/>
-                <property default="" name="uri" type="String" value="vap+txt:file:/Users/balarsen/svnhome/FIREL0-L1/test_data/HiResData_L1.txt?depend0=Epoch&amp;column=hr1"/>
+                <property default="" name="uri" type="String" value="vap+txt:file:/Users/balarsen/svnhome/FIREL0-L1/test_data/2Jan2013/HiResData_L1.txt?depend0=Epoch&amp;column=hr1"/>
                 <property name="validRange" type="String" value=""/>
             </DataSourceFilter>
             <DataSourceFilter id="data_9">
                 <property name="fill" type="String" value=""/>
                 <property name="filters" type="String" value=""/>
-                <property default="" name="uri" type="String" value="vap+txt:file:/Users/balarsen/svnhome/FIREL0-L1/test_data/HiResData_L1.txt?depend0=Epoch&amp;column=hr0"/>
+                <property default="" name="uri" type="String" value="vap+txt:file:/Users/balarsen/svnhome/FIREL0-L1/test_data/2Jan2013/HiResData_L1.txt?depend0=Epoch&amp;column=hr0"/>
                 <property name="validRange" type="String" value=""/>
             </DataSourceFilter>
             <DataSourceFilter id="data_10">
                 <property name="fill" type="String" value=""/>
                 <property name="filters" type="String" value=""/>
-                <property default="" name="uri" type="String" value="vap+txt:file:/Users/balarsen/svnhome/FIREL0-L1/test_data/HiResData_L1.txt?depend0=Epoch&amp;column=hr1"/>
+                <property default="" name="uri" type="String" value="vap+txt:file:/Users/balarsen/svnhome/FIREL0-L1/test_data/2Jan2013/HiResData_L1.txt?depend0=Epoch&amp;column=hr1"/>
                 <property name="validRange" type="String" value=""/>
             </DataSourceFilter>
         </property>
