@@ -83,7 +83,7 @@ class hires(object):
         dat['hr1'].attrs['DEPEND_0'] = 'Epoch'
         self.data = dat
 
-    def writeHiRes(self, filename, hdf5=False):
+    def write(self, filename, hdf5=False):
         if hdf5:
             dm.toHDF5(filename, self.data)
         else:
@@ -474,7 +474,7 @@ class config(object):
 
         self.data = dat
 
-    def writeConfig(self, filename, hdf5=False):
+    def write(self, filename, hdf5=False):
         if hdf5:
             dm.toHDF5(filename, self.data)
         else:
@@ -572,7 +572,7 @@ class datatimes(object):
 
         self.data = dat
 
-    def writeConfig(self, filename, hdf5=False):
+    def write(self, filename, hdf5=False):
         if hdf5:
             dm.toHDF5(filename, self.data)
         else:
