@@ -8,6 +8,34 @@ from spacepy import datamodel as dm
 
 import packet
 
+
+def dat2time(inval):
+    """
+    take 8 bytes and change them to a datetime
+    """
+    if isinstance(inval, str) and len(inval) > 2:
+        t0tmp = inval.split(' ')
+        t1tmp = [int(v, 16) for v in t0tmp[0:8]]
+        t1tmp.append(int(t0tmp[6]+t0tmp[7], 16))
+        t0 = datetime.datetime(2000 + t1tmp[0], t1tmp[1], t1tmp[2],
+                               t1tmp[3], t1tmp[4], t1tmp[5], 1000*t1tmp[6])
+    else:
+        try:
+            t1tmp = [int(v, 16) for v in inval[0:8]]
+        except TypeError:
+            t1tmp = inval
+        try:
+            t1tmp.append(int(inval[6]+inval[7], 16))
+        except TypeError:
+            t1tmp.append(256*inval[6] + inval[7])
+        try:
+            t0 = datetime.datetime(2000 + t1tmp[0], t1tmp[1], t1tmp[2],
+                                   t1tmp[3], t1tmp[4], t1tmp[5], 1000*t1tmp[6])
+        except ValueError:
+            return None
+    return t0
+
+
 class hires(object):
     """
     a hi-res data file
@@ -15,7 +43,6 @@ class hires(object):
     def __init__(self, inlst):
         dt = zip(*inlst)[0]
         counts = np.hstack(zip(*inlst)[1]).reshape((-1, 12))
-        pri
         dat = dm.SpaceData()
         dat['Epoch'] = dm.dmarray(dt)
         dat['Epoch'].attrs['CATDESC'] = 'Default Time'
@@ -97,12 +124,7 @@ class hiresPage(list):
         dat = inpage.split(' ')
         dat = [int(v, 16) for v in dat]
 
-        t0tmp = inpage[0:23].split(' ')
-        t1tmp = [int(v, 16) for v in t0tmp[:-2]]
-        t1tmp.append(int(t0tmp[-2]+t0tmp[-1], 16))
-        t0 = datetime.datetime(2000 + t1tmp[0], t1tmp[1], t1tmp[2],
-                               t1tmp[3], t1tmp[4], t1tmp[5], 1000*t1tmp[6])
-        self.t0 = t0
+        self.t0 = dat2time(inpage[0:25])
         # now the data length is 24
         self.major_data(dat[0:self._datalen+self._majorTimelen])
         start = self._datalen+self._majorTimelen+self._checksumlen
@@ -118,7 +140,8 @@ class hiresPage(list):
         """
         if len(inval) < self._datalen+self._minorTimelen+self._checksumlen:
             return
-        1/0
+        if (np.asarray(inval) == 0).all(): # is this line fill?
+            return
         dt = self[-1][0]
         us = 1000*(inval[0]*256 + inval[1])
         if  us < self[-1][0].microsecond:
@@ -132,12 +155,12 @@ class hiresPage(list):
         """
         read in and add major data to the class
         """
-        dt = datetime.datetime(2000 + inval[0], inval[1], inval[2],
-                               inval[3], inval[4], inval[5], 1000*(inval[6]*256 + inval[7]))
+        if (np.asarray(inval) == 0).all(): # is this line fill?
+            return
+        dt = dat2time(inval[0:8])
         d1 = np.asarray(inval[self._majorTimelen::2])
         d2 = np.asarray(inval[self._majorTimelen+1::2])
         self.append([dt, d1*265+d2])
-
     
 
 class page(str):
@@ -194,12 +217,7 @@ class configPage(list):
         dat = inpage.split(' ')
         dat = [int(v, 16) for v in dat]
 
-        t0tmp = inpage[0:23].split(' ')
-        t1tmp = [int(v, 16) for v in t0tmp[:-self._checksumlen]]
-        t1tmp.append(int(t0tmp[-2]+t0tmp[-1], 16))
-        t0 = datetime.datetime(2000 + t1tmp[0], t1tmp[1], t1tmp[2],
-                               t1tmp[3], t1tmp[4], t1tmp[5], 1000*t1tmp[6])
-        self.t0 = t0
+        self.t0 = dat2time(inpage[0:25])
         # now the data length is 24
         self.major_data(dat[0:self._datalen+ self._majorTimelen])
         start = self._datalen+ self._majorTimelen+self._checksumlen
@@ -215,6 +233,8 @@ class configPage(list):
         """
         if len(inval) < self._datalen+self._minorTimelen+2:
             return
+        if (np.asarray(inval) == 0).all(): # is this line fill?
+            return
         dt = self[-1][0] # this is the last time
         second = inval[1]
         minute = inval[0]
@@ -229,8 +249,9 @@ class configPage(list):
         """
         read in and add major data to the class
         """
-        dt = datetime.datetime(2000 + inval[0], inval[1], inval[2],
-                               inval[3], inval[4], inval[5], 1000*(inval[6]*256 + inval[7]))
+        if (np.asarray(inval) == 0).all(): # is this line fill?
+            return
+        dt = dat2time(inval[0:8])
         d1 = np.asarray(inval[ self._majorTimelen:])
         self.append([dt, d1])
 
@@ -469,6 +490,107 @@ class config(object):
         # sort the data
         h = sorted(h, key = lambda x: x[0])
         return config(h)
+
+
+def printDatatimesPage(inpage):
+    """
+    print out a Datatimes page for debugging
+    """
+    # the first one is 8+8 bytes then 8+8
+    dat = inpage.split(' ')
+    print ' '.join(dat[0:8+8])
+    for ii in range(16+8, len(dat), 16):
+        print ' '.join(dat[ii:ii+16])
+
+class datatimesPage(list):
+    """
+    a page of Datatimes data
+    """
+    def __init__(self, inpage):
+        self._datalen = 8
+        self._majorTimelen = 8
+        self._checksumlen = 0
+        dat = inpage.split(' ')
+        dat = [int(v, 16) for v in dat]
+
+        self.t0 = dat2time(inpage[0:25])
+
+        # now the data length is 8
+        for ii in range(0, len(dat), self._datalen+self._checksumlen): # the index of the start of each FIRE data
+            stop = ii+self._datalen+self._majorTimelen+self._checksumlen  # 24 bytes of data and 2 for a minor time stamp
+            self.major_data(dat[ii:stop])
+        # sort the data
+        self = sorted(self, key = lambda x: x[0])
+
+    def major_data(self, inval):
+        """
+        read in and add major data to the class
+        """
+        if (np.asarray(inval) == 0).all(): # is this line fill?
+            return
+        dt = dat2time(inval[0:8])
+        d1 = dat2time(inval[ self._majorTimelen:])
+        self.append([dt, d1])
+
+
+class datatimes(object):
+    """
+    a datatimes data file
+    """
+    def __init__(self, inlst):
+        dt = zip(*inlst)[0]
+        data = np.hstack(zip(*inlst)[1]).reshape((-1, 1))
+        dat = dm.SpaceData()
+        
+        dat['time'] = dm.dmarray(data[:,0])
+        dat['time'].attrs['CATDESC'] = 'Start or stop time'
+        dat['time'].attrs['FIELDNAM'] = 'time'
+        dat['time'].attrs['LABLAXIS'] = 'Start or stop time'
+        dat['time'].attrs['SCALETYP'] = 'linear'
+        #dat['time'].attrs['UNITS'] = 'none'
+        dat['time'].attrs['UNITS'] = 'ms'
+        dat['time'].attrs['VALIDMIN'] = datetime.datetime(1990,1,1)
+        dat['time'].attrs['VALIDMAX'] = datetime.datetime(2029,12,31,23,59,59,999000)
+        dat['time'].attrs['VAR_TYPE'] = 'support_data'
+        dat['time'].attrs['VAR_NOTES'] = 'Time data started or stopped'
+        dat['time'].attrs['DEPEND_0'] = 'Epoch'
+        dat['time'].attrs['FILLVAL'] = 'None'
+            
+        dat['Epoch'] = dm.dmarray(dt)
+        dat['Epoch'].attrs['CATDESC'] = 'Default Time'
+        dat['Epoch'].attrs['FIELDNAM'] = 'Epoch'
+        #dat['Epoch'].attrs['FILLVAL'] = datetime.datetime(2100,12,31,23,59,59,999000)
+        dat['Epoch'].attrs['LABLAXIS'] = 'Epoch'
+        dat['Epoch'].attrs['SCALETYP'] = 'linear'
+        dat['Epoch'].attrs['UNITS'] = 'ms'
+        dat['Epoch'].attrs['VALIDMIN'] = datetime.datetime(1990,1,1)
+        dat['Epoch'].attrs['VALIDMAX'] = datetime.datetime(2029,12,31,23,59,59,999000)
+        dat['Epoch'].attrs['VAR_TYPE'] = 'support_data'
+        dat['Epoch'].attrs['TIME_BASE'] = '0 AD'
+        dat['Epoch'].attrs['MONOTON'] = 'INCREASE'
+        dat['Epoch'].attrs['VAR_NOTES'] = 'Epoch at each configuration point'
+
+        self.data = dat
+
+    def writeConfig(self, filename, hdf5=False):
+        if hdf5:
+            dm.toHDF5(filename, self.data)
+        else:
+            dm.toJSONheadedASCII(filename, self.data)
+
+    @classmethod
+    def readDatatimes(self, filename):
+        b = packet.BIRDpackets(filename)
+        pages = page.fromPackets(b)
+        h = []
+        for p in pages:
+            h.extend(datatimesPage(p))
+        # sort the data
+        h = sorted(h, key = lambda x: x[0])
+        return datatimes(h)
+
+
+
 
 
 
