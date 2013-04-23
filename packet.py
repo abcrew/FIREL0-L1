@@ -1,18 +1,18 @@
 
 import datetime
 import time
+import os
 
 import numpy as np
 
 from CCITT_CRC16 import CRCfromString
 
 class BIRDpacket(object):
-    def __init__(self, strin):
+    def __init__(self, strin, filename):
         """
         given a line in a string input it as a packet
         """
-        # replace this from the path or filename when it makes sense
-        dt = datetime.date.today()
+        dt = datetime.datetime.strptime(os.path.basename(filename)[0:10], '%Y-%m-%d')
         hour, minute, second, millisecond = strin.split(' - ')[0].split(':')
         self.grt = datetime.datetime(dt.year, dt.month, dt.day, int(hour),
                                int(minute), int(second), int(millisecond)*100)
@@ -45,7 +45,7 @@ class BIRDpacket(object):
 
     __repr__ = __str__
 
-        
+
 class BIRDpackets(list):
     """
     make a list of all the BIRDpacket instances in a file
@@ -58,7 +58,8 @@ class BIRDpackets(list):
         with open(infile, 'r') as fp:
             dat = fp.readlines()
         dat = [v.strip() for v in dat]
-        self.extend([BIRDpacket(v) for v in dat])
+        self.filename = infile
+        self.extend([BIRDpacket(v, self.filename) for v in dat])
 
     def __str__(self):
         return("{0} packets: {1} bad CRC".format(len(self), np.sum([v.valid_crc for v in self if not v.valid_crc])))
