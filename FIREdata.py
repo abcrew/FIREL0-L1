@@ -15,15 +15,15 @@ def dat2time(inval):
     """
     if isinstance(inval, str) and len(inval) > 2:
         t0tmp = inval.split(' ')
-        t1tmp = [int(v, 16) for v in t0tmp[0:8]]
+        t1tmp = [int(v, 16) for v in t0tmp[0:6]]
         t1tmp.append(int(t0tmp[6]+t0tmp[7], 16))
         t0 = datetime.datetime(2000 + t1tmp[0], t1tmp[1], t1tmp[2],
                                t1tmp[3], t1tmp[4], t1tmp[5], 1000*t1tmp[6])
     else:
         try:
-            t1tmp = [int(v, 16) for v in inval[0:8]]
+            t1tmp = [int(v, 16) for v in inval[0:6]]
         except TypeError:
-            t1tmp = inval
+            t1tmp = inval[0:6]
         try:
             t1tmp.append(int(inval[6]+inval[7], 16))
         except TypeError:
@@ -99,7 +99,7 @@ class hires(object):
         # sort the data
         h = sorted(h, key = lambda x: x[0])
         return hires(h)
-    
+
 
 def printHiresPage(inpage):
     """
@@ -150,7 +150,7 @@ class hiresPage(list):
         d1 = np.asarray(inval[self._minorTimelen:-self._checksumlen:2])
         d2 = np.asarray(inval[self._minorTimelen+1:-self._checksumlen:2])
         self.append([dt, d1*265+d2])
-            
+
     def major_data(self, inval):
         """
         read in and add major data to the class
@@ -161,7 +161,7 @@ class hiresPage(list):
         d1 = np.asarray(inval[self._majorTimelen::2])
         d2 = np.asarray(inval[self._majorTimelen+1::2])
         self.append([dt, d1*265+d2])
-    
+
 
 class page(str):
     """
@@ -244,7 +244,7 @@ class configPage(list):
         dt = dt.replace(second=second)
         d1 = np.asarray(inval[self._minorTimelen:-self._checksumlen]) # 2 bytes of checksum
         self.append([dt, d1])
-            
+
     def major_data(self, inval):
         """
         read in and add major data to the class
@@ -265,7 +265,7 @@ class config(object):
         dt = zip(*inlst)[0]
         data = np.hstack(zip(*inlst)[1]).reshape((-1, 16))
         dat = dm.SpaceData()
-        
+
         dat['reg00'] = dm.dmarray(data[:,0])
         dat['reg00'].attrs['CATDESC'] = 'Config parameter {0}'.format(0)
         dat['reg00'].attrs['FIELDNAM'] = 'reg{0:02}'.format(0)
@@ -457,7 +457,7 @@ class config(object):
         dat['reg15'].attrs['VAR_TYPE'] = 'support_data'
         dat['reg15'].attrs['VAR_NOTES'] = 'register{0:02} data'.format(15)
         dat['reg15'].attrs['DEPEND_0'] = 'Epoch'
-            
+
         dat['Epoch'] = dm.dmarray(dt)
         dat['Epoch'].attrs['CATDESC'] = 'Default Time'
         dat['Epoch'].attrs['FIELDNAM'] = 'Epoch'
@@ -541,7 +541,7 @@ class datatimes(object):
         dt = zip(*inlst)[0]
         data = np.hstack(zip(*inlst)[1]).reshape((-1, 1))
         dat = dm.SpaceData()
-        
+
         dat['time'] = dm.dmarray(data[:,0])
         dat['time'].attrs['CATDESC'] = 'Start or stop time'
         dat['time'].attrs['FIELDNAM'] = 'time'
@@ -555,7 +555,7 @@ class datatimes(object):
         dat['time'].attrs['VAR_NOTES'] = 'Time data started or stopped'
         dat['time'].attrs['DEPEND_0'] = 'Epoch'
         dat['time'].attrs['FILLVAL'] = 'None'
-            
+
         dat['Epoch'] = dm.dmarray(dt)
         dat['Epoch'].attrs['CATDESC'] = 'Default Time'
         dat['Epoch'].attrs['FIELDNAM'] = 'Epoch'
