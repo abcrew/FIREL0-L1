@@ -119,7 +119,6 @@ class hiresPage(list):
         self._datalen = 24
         self._majorTimelen = 8
         self._minorTimelen = 2
-        self._checksumlen = 0
 
         dat = inpage.split(' ')
         dat = [int(v, 16) for v in dat]
@@ -127,9 +126,9 @@ class hiresPage(list):
         self.t0 = dat2time(inpage[0:25])
         # now the data length is 24
         self.major_data(dat[0:self._datalen+self._majorTimelen])
-        start = self._datalen+self._majorTimelen+self._checksumlen
-        for ii in range(start, len(dat), self._datalen+self._minorTimelen+self._checksumlen): # the index of the start of each FIRE data
-            stop = ii+self._datalen+self._minorTimelen+self._checksumlen  # 24 bytes of data and 2 for a minor time stamp
+        start = self._datalen+self._majorTimelen
+        for ii in range(start, len(dat), self._datalen+self._minorTimelen): # the index of the start of each FIRE data
+            stop = ii+self._datalen+self._minorTimelen  # 24 bytes of data and 2 for a minor time stamp
             self.minor_data(dat[ii:stop])
         # sort the data
         self = sorted(self, key = lambda x: x[0])
@@ -138,7 +137,7 @@ class hiresPage(list):
         """
         read in and add minor data to the class
         """
-        if len(inval) < self._datalen+self._minorTimelen+self._checksumlen:
+        if len(inval) < self._datalen+self._minorTimelen:
             return
         if (np.asarray(inval) == 0).all(): # is this line fill?
             return
@@ -147,8 +146,8 @@ class hiresPage(list):
         if  us < self[-1][0].microsecond:
             dt += datetime.timedelta(seconds=1)
         dt = dt.replace(microsecond=us)
-        d1 = np.asarray(inval[self._minorTimelen:-self._checksumlen:2])
-        d2 = np.asarray(inval[self._minorTimelen+1:-self._checksumlen:2])
+        d1 = np.asarray(inval[self._minorTimelen::2])
+        d2 = np.asarray(inval[self._minorTimelen+1::2])
         self.append([dt, d1*265+d2])
 
     def major_data(self, inval):
@@ -213,16 +212,15 @@ class configPage(list):
         self._datalen = 16
         self._majorTimelen = 8
         self._minorTimelen = 2
-        self._checksumlen = 0
         dat = inpage.split(' ')
         dat = [int(v, 16) for v in dat]
 
         self.t0 = dat2time(inpage[0:25])
         # now the data length is 24
         self.major_data(dat[0:self._datalen+ self._majorTimelen])
-        start = self._datalen+ self._majorTimelen+self._checksumlen
-        for ii in range(start, len(dat), self._datalen+self._minorTimelen+self._checksumlen): # the index of the start of each FIRE data
-            stop = ii+self._datalen+self._minorTimelen+self._checksumlen  # 24 bytes of data and 2 for a minor time stamp
+        start = self._datalen+ self._majorTimelen
+        for ii in range(start, len(dat), self._datalen+self._minorTimelen): # the index of the start of each FIRE data
+            stop = ii+self._datalen+self._minorTimelen  # 24 bytes of data and 2 for a minor time stamp
             self.minor_data(dat[ii:stop])
         # sort the data
         self = sorted(self, key = lambda x: x[0])
@@ -242,7 +240,7 @@ class configPage(list):
             dt += datetime.timedelta(hours=1)
         dt = dt.replace(minute=minute)
         dt = dt.replace(second=second)
-        d1 = np.asarray(inval[self._minorTimelen:-self._checksumlen]) # 2 bytes of checksum
+        d1 = np.asarray(inval[self._minorTimelen:]) # 2 bytes of checksum
         self.append([dt, d1])
 
     def major_data(self, inval):
@@ -509,15 +507,14 @@ class datatimesPage(list):
     def __init__(self, inpage):
         self._datalen = 8
         self._majorTimelen = 8
-        self._checksumlen = 0
         dat = inpage.split(' ')
         dat = [int(v, 16) for v in dat]
 
         self.t0 = dat2time(inpage[0:25])
 
         # now the data length is 8
-        for ii in range(0, len(dat), self._datalen+self._checksumlen): # the index of the start of each FIRE data
-            stop = ii+self._datalen+self._majorTimelen+self._checksumlen  # 24 bytes of data and 2 for a minor time stamp
+        for ii in range(0, len(dat), self._datalen): # the index of the start of each FIRE data
+            stop = ii+self._datalen+self._majorTimelen  # 24 bytes of data and 2 for a minor time stamp
             self.major_data(dat[ii:stop])
         # sort the data
         self = sorted(self, key = lambda x: x[0])
@@ -588,9 +585,5 @@ class datatimes(object):
         # sort the data
         h = sorted(h, key = lambda x: x[0])
         return datatimes(h)
-
-
-
-
 
 
