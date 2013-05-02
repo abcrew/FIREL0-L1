@@ -107,9 +107,9 @@ def printHiresPage(inpage):
     """
     # the first one is 8 bytes then 24
     dat = inpage.split(' ')
-    print ' '.join(dat[0:24+8+2])
-    for ii in range(24+8+2, len(dat), 24+2+2):
-        print ' '.join(dat[ii:ii+24+2+2])
+    print ' '.join(dat[0:24+8])
+    for ii in range(24+8, len(dat), 24+2):
+        print ' '.join(dat[ii:ii+24+2])
 
 class hiresPage(list):
     """
@@ -119,7 +119,7 @@ class hiresPage(list):
         self._datalen = 24
         self._majorTimelen = 8
         self._minorTimelen = 2
-        self._checksumlen = 2
+        self._checksumlen = 0
 
         dat = inpage.split(' ')
         dat = [int(v, 16) for v in dat]
@@ -201,9 +201,9 @@ def printConfigPage(inpage):
     """
     # the first one is 8+16 bytes then 16+2
     dat = inpage.split(' ')
-    print ' '.join(dat[0:16+8+2])
-    for ii in range(16+8+2, len(dat), 16+2+2):
-        print ' '.join(dat[ii:ii+16+2+2])
+    print ' '.join(dat[0:16+8])
+    for ii in range(16+8+2, len(dat), 16+2):
+        print ' '.join(dat[ii:ii+16+2])
 
 class configPage(list):
     """
@@ -213,7 +213,7 @@ class configPage(list):
         self._datalen = 16
         self._majorTimelen = 8
         self._minorTimelen = 2
-        self._checksumlen = 2
+        self._checksumlen = 0
         dat = inpage.split(' ')
         dat = [int(v, 16) for v in dat]
 
