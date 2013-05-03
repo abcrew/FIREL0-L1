@@ -19,6 +19,7 @@ import dateutil.parser as dup
 import numpy as np
 import spacepy.datamodel as dm
 
+from FIREdata import burst
 from FIREdata import config
 from FIREdata import hires
 from FIREdata import datatimes
@@ -35,7 +36,7 @@ def determineFileType(filename):
         return 'contextfile'
     elif re.match(r'^.*Config\.txt$', filename):
         return 'configfile'
-    elif re.match(r'^.*BurstData\.txt$', filename):
+    elif re.match(r'^.*Burst\.txt$', filename):
         return 'mbpfile'
     elif re.match(r'^.*HiRes\.txt$', filename):
         return 'hiresfile'
@@ -71,7 +72,7 @@ if __name__ == '__main__':
         if not options.hdf5:
             name += '_L1.txt'
         else:
-            name += '_L1.h5'            
+            name += '_L1.h5'
         args.append(os.path.join(os.curdir, name))
     outfile = args[1]
     if not os.path.isfile(os.path.expanduser(infile)):
@@ -102,14 +103,14 @@ if __name__ == '__main__':
     elif tp == 'hiresfile':
         hiresfile = True
     elif tp == 'datatimes':
-        datatimesfile = True            
+        datatimesfile = True
     else:
         raise(ValueError())
 
     if configfile:
         d = config.readConfig(infile)
     elif mbpfile:
-        MBPFile(infile, outfile)
+        d = burst.readBurst(infile)
     elif contextfile:
         ContextFile(infile, outfile)
     elif hiresfile:
