@@ -722,7 +722,7 @@ def printContextPage(inpage):
     """
     print out a Context page for debugging
     """
-    # the first one is 8+8 bytes then 8+8
+    # the first one is 8+6 bytes then 8+8
     dat = inpage.split(' ')
     print ' '.join(dat[0:8+6])
     for ii in range(8+6, len(dat), 8+6): # all majors in context
@@ -740,36 +740,14 @@ class contextPage(list):
         dat = [int(v, 16) for v in dat]
 
         self.t0 = dat2time(inpage[0:25])
-        # now the data length is 24
-        self.major_data(dat[0:self._datalen+ self._majorTimelen])
-        start = self._datalen+ self._majorTimelen
-        for ii in range(start, len(dat), self._datalen+self._minorTimelen): # the index of the start of each FIRE data
-            stop = ii+self._datalen+self._minorTimelen  # 24 bytes of data and 2 for a minor time stamp
-            self.minor_data(dat[ii:stop])
+        self.major_data(dat[0:self._datalen+self._majorTimelen])
+        start = self._datalen+self._majorTimelen
+        for ii in range(start, len(dat), self._datalen+self._majorTimelen): # the index of the start of each FIRE data
+            stop = ii+self._datalen+self._majorTimelen
+            self.major_data(dat[ii:stop])
         # sort the data
         self = sorted(self, key = lambda x: x[0])
 
-    def minor_data(self, inval):
-        """
-        read in and add minor data to the class
-        """
-        if len(inval) < self._datalen+self._minorTimelen+2:
-            return
-        if (np.asarray(inval) == 0).all(): # is this line fill?
-            return
-        dt = self[-1][0] # this is the last time
-        us = 1000*(inval[0]*2**8 + inval[1])
-        if  us < self[-1][0].microsecond:
-            dt += datetime.timedelta(seconds=1)
-        dt = dt.replace(microsecond=us)
-        dt2 = [dt-datetime.timedelta(microseconds=100e3)*i for i in range(9, -1, -1)]
-        d1 = np.asarray(inval[self._minorTimelen:]) # 2 bytes of checksum
-        d1 = np.asanyarray(['{0:02x}'.format(v) for v in d1])
-        d2 = [int(v[0], 16) for v in d1]
-        d3 = [int(v[1], 16) for v in d1]
-        dout = zip(d2, d3)
-        for v1, v2 in zip(dt2, dout):
-            self.append( (v1, v2) )
 
     def major_data(self, inval):
         """
@@ -778,15 +756,13 @@ class contextPage(list):
         if (np.asarray(inval) == 0).all(): # is this line fill?
             return
         dt = dat2time(inval[0:8])
-        # there are 10 times 100ms each before this one
-        dt2 = [dt-datetime.timedelta(microseconds=100e3)*i for i in range(9, -1, -1)]
         d1 = np.asarray(inval[ self._majorTimelen:])
         d1 = np.asanyarray(['{:02x}'.format(v) for v in d1])
-        d2 = [int(v[0], 16) for v in d1]
-        d3 = [int(v[1], 16) for v in d1]
-        dout = zip(d2, d3)
-        for v1, v2 in zip(dt2, dout):
-            self.append( (v1, v2) )
+        d2 = int(d1[2] + d1[1] + d1[0], 16)
+        d3 = int(d1[5] + d1[4] + d1[3], 16)
+        dout = [d2, d3]
+#        for v1, v2 in zip(dt, dout):
+        self.append( (dt, dout) )
 
 
 class context(object):

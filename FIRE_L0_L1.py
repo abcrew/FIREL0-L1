@@ -10,7 +10,6 @@ Converter form the FIRE L0 packets to L1 data
 # standard library includes (alphabetical)
 from optparse import OptionParser
 import os
-import re
 
 # dependency includes (alphabetical)
 
@@ -20,27 +19,8 @@ from FIREdata import config
 from FIREdata import context
 from FIREdata import datatimes
 from FIREdata import hires
+from FIREutils import determineFileType
 
-
-
-def determineFileType(filename):
-    """
-    given a filename figure out what type of file this is
-    """
-    # use an Re to match the filename convention and return one of
-    ## 'configfile', 'mbpfile', 'contextfile', 'hiresfile' or ValueError
-    if re.match(r'^.*Context\.txt$', filename):
-        return 'contextfile'
-    elif re.match(r'^.*Config\.txt$', filename):
-        return 'configfile'
-    elif re.match(r'^.*Burst\.txt$', filename):
-        return 'mbpfile'
-    elif re.match(r'^.*HiRes\.txt$', filename):
-        return 'hiresfile'
-    elif re.match(r'^.*DataTimes\.txt$', filename):
-        return 'datatimes'
-    else:
-        raise(ValueError('No Match'))
 
 
 if __name__ == '__main__':
