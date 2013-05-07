@@ -8,21 +8,18 @@ Converter form the FIRE L0 packets to L1 data
 """
 
 # standard library includes (alphabetical)
-from abc import ABCMeta, abstractmethod
-import datetime
 from optparse import OptionParser
 import os
 import re
 
 # dependency includes (alphabetical)
-import dateutil.parser as dup
-import numpy as np
-import spacepy.datamodel as dm
+
 
 from FIREdata import burst
 from FIREdata import config
-from FIREdata import hires
+from FIREdata import context
 from FIREdata import datatimes
+from FIREdata import hires
 
 
 
@@ -32,7 +29,7 @@ def determineFileType(filename):
     """
     # use an Re to match the filename convention and return one of
     ## 'configfile', 'mbpfile', 'contextfile', 'hiresfile' or ValueError
-    if re.match(r'^.*ContextData\.txt$', filename):
+    if re.match(r'^.*Context\.txt$', filename):
         return 'contextfile'
     elif re.match(r'^.*Config\.txt$', filename):
         return 'configfile'
@@ -83,11 +80,6 @@ if __name__ == '__main__':
 #==============================================================================
 # deal with the filetype options
 #==============================================================================
-    configfile = False
-    mbpfile = False
-    contextfile = False
-    hiresfile = False
-    datatimesfile = False
     try:
         tp = determineFileType(infile)
     except (ValueError, NotImplementedError):
@@ -95,30 +87,18 @@ if __name__ == '__main__':
         parser.error("Could not determine the file type and flag not given: {0}".format(infile))
 
     if tp == 'configfile':
-        configfile = True
+        d = config.read(infile)
     elif tp == 'mbpfile':
-        mbpfile = True
+        d = burst.read(infile)
     elif tp == 'contextfile':
-        contextfile = True
+        d = context.read(infile)
     elif tp == 'hiresfile':
-        hiresfile = True
+        d = hires.read(infile)
     elif tp == 'datatimes':
-        datatimesfile = True
+        d = datatimes.read(infile)
     else:
         raise(ValueError())
 
-    if configfile:
-        d = config.readConfig(infile)
-    elif mbpfile:
-        d = burst.readBurst(infile)
-    elif contextfile:
-        ContextFile(infile, outfile)
-    elif hiresfile:
-        d = hires.readHighRes(infile)
-    elif datatimes:
-        d = datatimes.readDatatimes(infile)
-    else:
-        raise(RuntimeError('How did we get here?  Programming error'))
     d.write(outfile, hdf5=options.hdf5)
     print('Wrote {0}'.format(outfile))
 

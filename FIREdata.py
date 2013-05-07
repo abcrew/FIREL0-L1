@@ -90,7 +90,7 @@ class hires(object):
             dm.toJSONheadedASCII(filename, self.data)
 
     @classmethod
-    def readHighRes(self, filename):
+    def read(self, filename):
         b = packet.BIRDpackets(filename)
         pages = page.fromPackets(b)
         h = []
@@ -479,7 +479,7 @@ class config(object):
             dm.toJSONheadedASCII(filename, self.data)
 
     @classmethod
-    def readConfig(self, filename):
+    def read(self, filename):
         b = packet.BIRDpackets(filename)
         pages = page.fromPackets(b)
         h = []
@@ -576,7 +576,7 @@ class datatimes(object):
             dm.toJSONheadedASCII(filename, self.data)
 
     @classmethod
-    def readDatatimes(self, filename):
+    def read(self, filename):
         b = packet.BIRDpackets(filename)
         pages = page.fromPackets(b)
         h = []
@@ -667,33 +667,19 @@ class burst(object):
         data = np.hstack(zip(*inlst)[1]).reshape((-1, 2))
         dat = dm.SpaceData()
 
-        dat['Burst1'] = dm.dmarray(data[:, 0])
-        dat['Burst1'].attrs['CATDESC'] = 'Burst parameter ch1'
-        dat['Burst1'].attrs['FIELDNAM'] = 'Burst'
-        dat['Burst1'].attrs['LABLAXIS'] = 'Burst Parameter ch1'
-        dat['Burst1'].attrs['SCALETYP'] = 'linear'
+        dat['Burst'] = dm.dmarray(data[:])
+        dat['Burst'].attrs['CATDESC'] = 'Burst parameter'
+        dat['Burst'].attrs['FIELDNAM'] = 'Burst'
+        dat['Burst'].attrs['LABLAXIS'] = 'Burst Parameter'
+        dat['Burst'].attrs['SCALETYP'] = 'linear'
         #dat['time'].attrs['UNITS'] = 'none'
-        dat['Burst1'].attrs['UNITS'] = ''
-        dat['Burst1'].attrs['VALIDMIN'] = 0
-        dat['Burst1'].attrs['VALIDMAX'] = 2**4-1
-        dat['Burst1'].attrs['VAR_TYPE'] = 'data'
-        dat['Burst1'].attrs['VAR_NOTES'] = 'Burst parameter compressed onboard'
-        dat['Burst1'].attrs['DEPEND_0'] = 'Epoch'
-        dat['Burst1'].attrs['FILLVAL'] = 2**8-1
-
-        dat['Burst2'] = dm.dmarray(data[:, 1])
-        dat['Burst2'].attrs['CATDESC'] = 'Burst parameter ch2'
-        dat['Burst2'].attrs['FIELDNAM'] = 'Burst'
-        dat['Burst2'].attrs['LABLAXIS'] = 'Burst Parameter ch2'
-        dat['Burst2'].attrs['SCALETYP'] = 'linear'
-        #dat['time'].attrs['UNITS'] = 'none'
-        dat['Burst2'].attrs['UNITS'] = ''
-        dat['Burst2'].attrs['VALIDMIN'] = 0
-        dat['Burst2'].attrs['VALIDMAX'] = 2**4-1
-        dat['Burst2'].attrs['VAR_TYPE'] = 'data'
-        dat['Burst2'].attrs['VAR_NOTES'] = 'Burst parameter compressed onboard'
-        dat['Burst2'].attrs['DEPEND_0'] = 'Epoch'
-        dat['Burst2'].attrs['FILLVAL'] = 2**8-1
+        dat['Burst'].attrs['UNITS'] = ''
+        dat['Burst'].attrs['VALIDMIN'] = 0
+        dat['Burst'].attrs['VALIDMAX'] = 2**4-1
+        dat['Burst'].attrs['VAR_TYPE'] = 'data'
+        dat['Burst'].attrs['VAR_NOTES'] = 'Burst parameter compressed onboard'
+        dat['Burst'].attrs['DEPEND_0'] = 'Epoch'
+        dat['Burst'].attrs['FILLVAL'] = 2**8-1
 
         dat['Epoch'] = dm.dmarray(dt)
         dat['Epoch'].attrs['CATDESC'] = 'Default Time'
@@ -718,7 +704,7 @@ class burst(object):
             dm.toJSONheadedASCII(filename, self.data, order=['Epoch'] )
 
     @classmethod
-    def readBurst(self, filename):
+    def read(self, filename):
         b = packet.BIRDpackets(filename)
         pages = page.fromPackets(b)
         h = []
@@ -800,42 +786,29 @@ class contextPage(list):
             self.append( (v1, v2) )
 
 
-class burst(object):
+class context(object):
     """
-    a datatimes data file
+    a context data file
     """
     def __init__(self, inlst):
         dt = zip(*inlst)[0]
         data = np.hstack(zip(*inlst)[1]).reshape((-1, 2))
         dat = dm.SpaceData()
 
-        dat['Burst1'] = dm.dmarray(data[:, 0])
-        dat['Burst1'].attrs['CATDESC'] = 'Burst parameter ch1'
-        dat['Burst1'].attrs['FIELDNAM'] = 'Burst'
-        dat['Burst1'].attrs['LABLAXIS'] = 'Burst Parameter ch1'
-        dat['Burst1'].attrs['SCALETYP'] = 'linear'
+        dat['Context'] = dm.dmarray(data[:])
+        dat['Context'].attrs['CATDESC'] = 'Context data'
+        dat['Context'].attrs['FIELDNAM'] = 'Context'
+        dat['Context'].attrs['LABLAXIS'] = 'Context data'
+        dat['Context'].attrs['SCALETYP'] = 'log'
         #dat['time'].attrs['UNITS'] = 'none'
-        dat['Burst1'].attrs['UNITS'] = ''
-        dat['Burst1'].attrs['VALIDMIN'] = 0
-        dat['Burst1'].attrs['VALIDMAX'] = 2**4-1
-        dat['Burst1'].attrs['VAR_TYPE'] = 'data'
-        dat['Burst1'].attrs['VAR_NOTES'] = 'Burst parameter compressed onboard'
-        dat['Burst1'].attrs['DEPEND_0'] = 'Epoch'
-        dat['Burst1'].attrs['FILLVAL'] = 2**8-1
+        dat['Context'].attrs['UNITS'] = ''
+        dat['Context'].attrs['VALIDMIN'] = 0
+        dat['Context'].attrs['VALIDMAX'] = 2**4-1
+        dat['Context'].attrs['VAR_TYPE'] = 'data'
+        dat['Context'].attrs['VAR_NOTES'] = 'Context data 6s average'
+        dat['Context'].attrs['DEPEND_0'] = 'Epoch'
+        dat['Context'].attrs['FILLVAL'] = 2**8-1
 
-        dat['Burst2'] = dm.dmarray(data[:, 1])
-        dat['Burst2'].attrs['CATDESC'] = 'Burst parameter ch2'
-        dat['Burst2'].attrs['FIELDNAM'] = 'Burst'
-        dat['Burst2'].attrs['LABLAXIS'] = 'Burst Parameter ch2'
-        dat['Burst2'].attrs['SCALETYP'] = 'linear'
-        #dat['time'].attrs['UNITS'] = 'none'
-        dat['Burst2'].attrs['UNITS'] = ''
-        dat['Burst2'].attrs['VALIDMIN'] = 0
-        dat['Burst2'].attrs['VALIDMAX'] = 2**4-1
-        dat['Burst2'].attrs['VAR_TYPE'] = 'data'
-        dat['Burst2'].attrs['VAR_NOTES'] = 'Burst parameter compressed onboard'
-        dat['Burst2'].attrs['DEPEND_0'] = 'Epoch'
-        dat['Burst2'].attrs['FILLVAL'] = 2**8-1
 
         dat['Epoch'] = dm.dmarray(dt)
         dat['Epoch'].attrs['CATDESC'] = 'Default Time'
@@ -860,14 +833,14 @@ class burst(object):
             dm.toJSONheadedASCII(filename, self.data, order=['Epoch'] )
 
     @classmethod
-    def readBurst(self, filename):
+    def read(self, filename):
         b = packet.BIRDpackets(filename)
         pages = page.fromPackets(b)
         h = []
         for p in pages:
-            h.extend(burstPage(p))
+            h.extend(contextPage(p))
         # sort the data
         h = sorted(h, key = lambda x: x[0])
-        return burst(h)
+        return context(h)
 
 
