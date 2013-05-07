@@ -147,6 +147,8 @@ class hiresPage(list):
             dt += datetime.timedelta(seconds=1)
         if us == 1000000:
             dt += datetime.timedelta(seconds=1)
+        elif us > 1000000:
+            return
         else:
             dt = dt.replace(microsecond=us)
         d1 = np.asarray(inval[self._minorTimelen::2])
