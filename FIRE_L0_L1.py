@@ -99,6 +99,8 @@ if __name__ == '__main__':
     else:
         raise(ValueError())
 
+    if options.force and os.path.isfile(os.path.expanduser(outfile)):
+        os.remove(outfile)
     d.write(outfile, hdf5=options.hdf5)
     print('Wrote {0}'.format(outfile))
 

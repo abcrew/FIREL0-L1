@@ -27,7 +27,7 @@ def dat2time(inval):
         try:
             t1tmp.append(int(inval[6]+inval[7], 16))
         except TypeError:
-            t1tmp.append(256*inval[6] + inval[7])
+            t1tmp.append(2**8*inval[6] + inval[7])
         try:
             t0 = datetime.datetime(2000 + t1tmp[0], t1tmp[1], t1tmp[2],
                                    t1tmp[3], t1tmp[4], t1tmp[5], 1000*t1tmp[6])
@@ -142,13 +142,16 @@ class hiresPage(list):
         if (np.asarray(inval) == 0).all(): # is this line fill?
             return
         dt = self[-1][0]
-        us = 1000*(inval[0]*256 + inval[1])
+        us = 1000*(inval[0]*2**8 + inval[1])
         if  us < self[-1][0].microsecond:
             dt += datetime.timedelta(seconds=1)
-        dt = dt.replace(microsecond=us)
+        if us == 1000000:
+            dt += datetime.timedelta(seconds=1)
+        else:
+            dt = dt.replace(microsecond=us)
         d1 = np.asarray(inval[self._minorTimelen::2])
         d2 = np.asarray(inval[self._minorTimelen+1::2])
-        self.append([dt, d1*265+d2])
+        self.append([dt, d2*2**8+d1])
 
     def major_data(self, inval):
         """
@@ -159,7 +162,7 @@ class hiresPage(list):
         dt = dat2time(inval[0:8])
         d1 = np.asarray(inval[self._majorTimelen::2])
         d2 = np.asarray(inval[self._majorTimelen+1::2])
-        self.append([dt, d1*265+d2])
+        self.append([dt, d2*2**8+d1])
 
 
 class page(str):
@@ -627,7 +630,7 @@ class burstPage(list):
         if (np.asarray(inval) == 0).all(): # is this line fill?
             return
         dt = self[-1][0] # this is the last time
-        us = 1000*(inval[0]*256 + inval[1])
+        us = 1000*(inval[0]*2**8 + inval[1])
         if  us < self[-1][0].microsecond:
             dt += datetime.timedelta(seconds=1)
         dt = dt.replace(microsecond=us)
@@ -755,7 +758,7 @@ class contextPage(list):
         if (np.asarray(inval) == 0).all(): # is this line fill?
             return
         dt = self[-1][0] # this is the last time
-        us = 1000*(inval[0]*256 + inval[1])
+        us = 1000*(inval[0]*2**8 + inval[1])
         if  us < self[-1][0].microsecond:
             dt += datetime.timedelta(seconds=1)
         dt = dt.replace(microsecond=us)
