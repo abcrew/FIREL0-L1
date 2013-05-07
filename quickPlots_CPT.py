@@ -64,7 +64,7 @@ if __name__ == '__main__':
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        imname = f + '_ql_{0}.png'.format(datetime.datetime.now()).replace(' ', 'T')
+        imname = f + '_ql_{0}.png'.format(datetime.datetime.now()).replace(' ', 'T').replace(':', '-')
 
         if tp == 'configfile':
             for var in range(16):
