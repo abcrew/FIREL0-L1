@@ -7,7 +7,12 @@ This code makes quick summary plots for use after FIRE CPT
 * this code is pretty dumb so be patient in case of issues
 
 To use:
-    Run this code passing in the names of the processed L1 files
+    1) process the L0 files to L1
+       -- e.g. ./FIRE_L0_L1.py test_data/20130506-FB1/2013-05-06-Context.txt
+    2) Run this code passing in the names of the processed L1 files
+       -- e.g. ./quickPlots_CPT.py 2013-05-06-*_L1.txt
+    3) Plots are created and saved, look at them
+
 
 """
 
