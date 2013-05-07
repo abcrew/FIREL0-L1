@@ -31,15 +31,9 @@ from FIREutils import determineFileType
 
 
 if __name__ == '__main__':
-    usage = "usage: %prog [options] infile [outfile]"
+    usage = "usage: %prog [options] infile [[infile] ...]"
     parser = OptionParser(usage=usage)
 
-    parser.add_option("-f", "--force",
-                  action="store_true", dest="force",
-                  help="Force an overwrite, default=False", default=False)
-    parser.add_option("", "--hdf5",
-                  action="store_true", dest="hdf5",
-                  help="Store data in HDF5 format not txt, default=False", default=False)
     (options, args) = parser.parse_args()
 
     if len(args) < 1:
