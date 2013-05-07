@@ -97,8 +97,8 @@ if __name__ == '__main__':
                 ind11 = dat['hr1'][:,v] < 100
                 ind1 = np.bitwise_and(ind10, ind11)
 
-                ax.plot(dat['Epoch'][ind0], dat['hr0'][ind0, v], label='HR0-{0}'.format(v))
-                ax.plot(dat['Epoch'][ind0], dat['hr1'][ind1, v], label='HR1-{0}'.format(v))
+                ax.plot(dat['Epoch'][:], dat['hr0'][:, v], label='HR0-{0}'.format(v))
+                ax.plot(dat['Epoch'][:], dat['hr1'][:, v], label='HR1-{0}'.format(v))
             ax.set_ylim((0, 11))
             ax.legend(loc='upper left')
             fig.savefig(imname)
