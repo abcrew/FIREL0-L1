@@ -1,4 +1,3 @@
-
 import datetime
 import itertools
 import time
@@ -69,7 +68,7 @@ class hires(object):
         dat['hr0'].attrs['VAR_TYPE'] = 'data'
         dat['hr0'].attrs['VAR_NOTES'] = 'hr0 for each channel'
         dat['hr0'].attrs['DEPEND_0'] = 'Epoch'
-        dat['hr1'] = dm.dmarray(counts[:,0:6])
+        dat['hr1'] = dm.dmarray(counts[:,6:])
         dat['hr1'].attrs['CATDESC'] = 'Detector 1 hi-res'
         dat['hr1'].attrs['FIELDNAM'] = 'hr1'
         dat['hr1'].attrs['FILLVAL'] = -1e-31
