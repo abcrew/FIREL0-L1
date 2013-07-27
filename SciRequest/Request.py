@@ -6,6 +6,8 @@ ops to FIREBIRD science
 from __future__ import division
 
 import datetime
+import textwrap
+import os
 import warnings
 
 warnings.simplefilter('always')
@@ -14,19 +16,23 @@ typeDict = {'HIRES':{'dataPerBlock':2.94375},
             'CONTEXT':{'dataPerBlock':1752},
             'MICRO_BURST':{'dataPerBlock':584},
             'CONFIG':{'dataPerBlock':54.48},
-            'DATA_TIMES':{'dataPerBlock':2000}} # This was a TBD
+            'DATA_TIMES':{'dataPerBlock':2000}} # This was a TBD and 2000 was made up
 secondsPerPage = 0.29
 
 class Entry(object):
     """
     class to hold a sinlge entry in a Request
     """
-    def __init__(self, typ, date, duration, JAS=None):
+    def __init__(self, sc, typ, date, duration, priority, JAS=None):
+        if sc not in [1,2] and sc not in ['1', '2']:
+            raise(ValueError('Spacecraft, "{0}", not understood, must be 1 or 2'.format(sc)))
+        self.sc = sc
         if typ.upper() not in typeDict:
-            raise(ValueError('Type: {0} not recognized, must be one of {1}'.format(typ.upper(), typeDict.keys())))
+            raise(ValueError('Type, "{0}", not recognized, must be one of {1}'.format(typ.upper(), typeDict.keys())))
         self.typ = typ.upper()
         self.date = date
         self.duration = int(duration)
+        self.priority = int(priority)
         self.JAS = JAS
         self.downlinktime = None # to be filled by a calculation
         self._calcDownlink()
@@ -82,5 +88,99 @@ class Entry(object):
         return "<{0} {1} {2} {3}>".format(self.typ, self.date, self.duration, self.JAS)
 
 
+class Request(list):
+    """
+    class is a collection of Entry objects that go together to make a request
+    to the mission ops
+    """
+    def __init__(self, date=None, directory='.'):
+        super(Request, self).__init__()
+        if date is None: # assume today
+            date = datetime.datetime.utcnow().date()
+        elif isinstance(date, datetime.datetime):
+            date = date.date()
+        self.date = date
+        self.directory = directory
+
+    def addEntry(self, entry):
+        """
+        given an Entry object add it to the Request.  They entries are requested
+        in priority order, higher numbers have higher priority
+        """
+        self.append( entry )
+
+    def sortEntries(self):
+        """
+        sort all the entries into priority order
+        """
+        self = sorted(self, key=lambda x: x.priority)[::-1] # big to little
+
+    @property
+    def downlinkTime(self):
+        """
+        compute the total downlink time of the request
+        """
+        dl = 0.0
+        for v in self:
+            dl += v.downlinktime
+        return dl
+
+    def __repr__(self):
+        return "<Request: {0} entries: {1:.1f} downlink seconds>".format(len(self), self.downlinkTime)
+
+    def _makeFilename(self, sc, version=0):
+        """
+        build a request filename for each filename based on the entries
+        """
+        if sc not in [1,2] and sc not in ['1', '2']:
+            raise(ValueError('Spacecraft, "{0}", not understood, must be 1 or 2'.format(sc)))
+        return "FU_{0}_REQ_{1:04}{2:02}{3:02}_v{4:02}.csv".format(sc,
+                    self.date.year, self.date.month, self.date.day,
+                    version)
+
+    def _makeHeader(self, sc):
+        """
+        build a header for the file
+        """
+        if sc not in [1,2] and sc not in ['1', '2']:
+            raise(ValueError('Spacecraft, "{0}", not understood, must be 1 or 2'.format(sc)))
+        header = """\
+        # FIRE Science Priority Queue request file
+        # FIREBIRD UNIT {0}
+        # Type, year, month, day, hour, minute, second, duration, JAS file name
+        """.format(sc)
+        header = textwrap.dedent(header)
+        return header
+
+    @staticmethod
+    def _extractVersion(filename):
+        """
+        grab out the version from a filename
+        """
+        version = filename.split('_')[-1].split('.')[0][1:]
+        return int(version)
+
+    def toFile(self):
+        """
+        build the file and output it
+        """
+        for sc in [1,2]:
+            filename = os.path.expanduser(os.path.expandvars(os.path.join(self.directory, self._makeFilename(sc))))
+            while os.path.isfile(filename):
+                filename = self._makeFilename(sc, Request._extractVersion(filename)+1)
+            header = self._makeHeader(sc)
+            try:
+                with open(filename, 'w') as fp:
+                    fp.writelines(header)
+                    outcntr = 0
+                    for v in self:
+                        if v.sc == sc:
+                            fp.writelines(str(v) + '\n')
+                            outcntr +=  1
+                    fp.writelines('\n')
+                    if not outcntr:
+                        raise(RuntimeError('No data for sc {0} in Request'.format(sc)))
+            except:
+                os.remove(filename)
 
 
