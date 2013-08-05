@@ -12,6 +12,7 @@ import warnings
 
 warnings.simplefilter('always')
 
+# this is type, then seconds of data per block
 typeDict = {'HIRES':{'dataPerBlock':2.94375},
             'CONTEXT':{'dataPerBlock':1752},
             'MICRO_BURST':{'dataPerBlock':584},
@@ -21,7 +22,7 @@ secondsPerPage = 0.29
 
 class Entry(object):
     """
-    class to hold a sinlge entry in a Request
+    class to hold a single entry in a Request
     """
     def __init__(self, sc, typ, date, duration, priority, JAS=None):
         if sc not in [1,2] and sc not in ['1', '2']:
@@ -42,10 +43,30 @@ class Entry(object):
                 self._calcDownlink()
             warnings.warn("Downlink time was longer than allowed, duration shortened to {0}".format(self.duration))
 
+#    def __eq__(self, other):
+#        """
+#        if the pieces match they are equal
+#        """
+#        if other.sc != self.sc:
+#            return False
+#        if other.typ != self.typ:
+#            return False
+#        if other.date != self.date:
+#            return False
+#        if other.duration != self.duration:
+#            return False
+#        if other.priority != self.priority:
+#            return False
+#        if other.downlinktime != self.downlinktime:
+#            return False
+#        if other.JAS != self.JAS:
+#            return False
+#        return True
+
     def _calcDownlink(self, rate=19200):
         """
-        given what we know about the duration of each 4k block calcualte how
-        long the downlink for the reqested data will take
+        given what we know about the duration of each 4k block calculate how
+        long the downlink for the requested data will take
         """
         ticks = self.duration/typeDict[self.typ]['dataPerBlock']
         self.downlinktime = ticks*secondsPerPage
@@ -53,7 +74,7 @@ class Entry(object):
     @staticmethod
     def _timeSplit(dt):
         """
-        split a datetime into it peices for the output
+        split a datetime into it pieces for the output
         """
         return [dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second]
 
@@ -107,13 +128,16 @@ class Request(list):
         given an Entry object add it to the Request.  They entries are requested
         in priority order, higher numbers have higher priority
         """
+        # make sure it is an entry first
+        if not isinstance(entry, Entry):
+            raise(ValueError("Bad Entry object given"))
         self.append( entry )
 
     def sortEntries(self):
         """
         sort all the entries into priority order
         """
-        self = sorted(self, key=lambda x: x.priority)[::-1] # big to little
+        self = sorted(self, key=lambda x: x.priority) # big to little
 
     @property
     def downlinkTime(self):
@@ -170,7 +194,7 @@ class Request(list):
                 filename = self._makeFilename(sc, Request._extractVersion(filename)+1)
             header = self._makeHeader(sc)
             try:
-                with open(filename, 'w') as fp:
+                with open(os.path.expanduser(os.path.expandvars(os.path.join(self.directory, filename))), 'w') as fp:
                     fp.writelines(header)
                     outcntr = 0
                     for v in self:
@@ -180,7 +204,7 @@ class Request(list):
                     fp.writelines('\n')
                     if not outcntr:
                         raise(RuntimeError('No data for sc {0} in Request'.format(sc)))
-            except:
+            except RuntimeError:
                 os.remove(filename)
 
 
