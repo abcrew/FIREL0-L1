@@ -31,9 +31,9 @@ class EntryTests(unittest.TestCase):
                     'MICRO_BURST':{'dataPerBlock':584},
                     'CONFIG':{'dataPerBlock':54.48},
                     'DATA_TIMES':{'dataPerBlock':2000}} # This was a TBD and 2000 was made up
-        secondsPerPage = 0.29
+        secondsPerPage = 2.3893333333333335
         self.assertEqual(typeDict, Request.typeDict)
-        self.assertEqual(secondsPerPage, Request.secondsPerPage)
+        self.assertAlmostEqual(secondsPerPage, Request.secondsPerPage)
 
     def test_timeSplit(self):
         ans = [2013, 1, 23, 12, 34, 0]
@@ -61,31 +61,31 @@ class EntryTests(unittest.TestCase):
 
     def test_calcDownlink(self):
         entry = Request.Entry(1, 'CONTEXT', datetime.datetime(2013, 12, 2, 1), 2300, 10)
-        self.assertAlmostEqual(entry.downlinktime, 0.3807077625570776, 4)
+        self.assertAlmostEqual(entry.downlinktime, 3.1366818873668194, 4)
 
     def test_longdownlink(self):
         warnings.simplefilter('error')
         self.assertRaises(UserWarning, Request.Entry, 1, 'HIRES', datetime.datetime(2013, 12, 2, 1), 1210, 10)
         warnings.simplefilter('ignore')
         entry = Request.Entry(1, 'HIRES', datetime.datetime(2013, 12, 2, 1), 2300, 10)
-        self.assertAlmostEqual(entry.downlinktime, 59.994904458598725, 4)
-        self.assertAlmostEqual(entry.duration, 609, 4)
+        self.assertAlmostEqual(entry.downlinktime, 59.251408351026186, 4)
+        self.assertAlmostEqual(entry.duration, 73, 4)
 
         entry = Request.Entry(1, 'CONTEXT', datetime.datetime(2013, 12, 2, 1), 1752*75, 10)
-        self.assertAlmostEqual(entry.downlinktime, 21.75, 4)
-        self.assertAlmostEqual(entry.duration, 131400, 4)
+        self.assertAlmostEqual(entry.downlinktime, 59.9992694063927, 4)
+        self.assertAlmostEqual(entry.duration, 43995, 4)
 
         entry = Request.Entry(1, 'MICRO_BURST', datetime.datetime(2013, 12, 2, 1), 584*73, 10)
-        self.assertAlmostEqual(entry.downlinktime, 21.169999999999998, 4)
-        self.assertAlmostEqual(entry.duration, 42632, 4)
+        self.assertAlmostEqual(entry.downlinktime, 59.9992694063927, 4)
+        self.assertAlmostEqual(entry.duration, 14665, 4)
 
         entry = Request.Entry(1, 'CONFIG', datetime.datetime(2013, 12, 2, 1), 54.48*75, 10)
-        self.assertAlmostEqual(entry.downlinktime, 21.744676945668132, 4)
-        self.assertAlmostEqual(entry.duration, 4085, 4)
+        self.assertAlmostEqual(entry.downlinktime, 59.99647577092512, 4)
+        self.assertAlmostEqual(entry.duration, 1368, 4)
 
         entry = Request.Entry(1, 'DATA_TIMES', datetime.datetime(2013, 12, 2, 1), 2000*75, 10)
-        self.assertAlmostEqual(entry.downlinktime, 21.75, 4)
-        self.assertAlmostEqual(entry.duration, 150000, 4)
+        self.assertAlmostEqual(entry.downlinktime, 59.99974400000001, 4)
+        self.assertAlmostEqual(entry.duration, 50223, 4)
 
     def test_str(self):
         entry = Request.Entry(1, 'MICRO_BURST', datetime.datetime(2013, 12, 2, 1), 345, 10)
@@ -120,10 +120,13 @@ class RequestTests(unittest.TestCase):
         a = Request.Request(date=datetime.date(1977, 3, 7))
         entry = Request.Entry(1, 'MICRO_BURST', datetime.datetime(2013, 12, 2, 1), 345, 10)
         a.addEntry(entry)
-        self.assertAlmostEqual(0.17131849315068493, a.downlinkTime, 4)
+        self.assertAlmostEqual(1.4115068493150686, a.downlinkTime, 4)
         self.assertRaises(ValueError, a.addEntry, 'badval')
         self.assertEqual(len(a), 1)
-        self.assertAlmostEqual(0.17131849315068493, a.downlinkTime, 4)
+        self.assertAlmostEqual(1.4115068493150686, a.downlinkTime, 4)
+        warnings.simplefilter('error')
+        self.assertRaises(UserWarning, a.addEntry, entry)
+        warnings.simplefilter('ignore')
 
     def test_sortEntry(self):
         a = Request.Request(date=datetime.date(1977, 3, 7))
@@ -135,7 +138,7 @@ class RequestTests(unittest.TestCase):
         self.assertEqual(len(a), 2)
         self.assertEqual(a[0], entry2)
         self.assertEqual(a[1], entry1)
-        self.assertAlmostEqual(0.34263698630136985, a.downlinkTime, 4)
+        self.assertAlmostEqual(2.8230136986301373, a.downlinkTime, 4)
 
     def test_makeFilename(self):
         a = Request.Request(date=datetime.date(1977, 3, 7))

@@ -18,7 +18,11 @@ typeDict = {'HIRES':{'dataPerBlock':2.94375},
             'MICRO_BURST':{'dataPerBlock':584},
             'CONFIG':{'dataPerBlock':54.48},
             'DATA_TIMES':{'dataPerBlock':2000}} # This was a TBD and 2000 was made up
-secondsPerPage = 0.29
+secondsPerPage = 4096*8/19200.*1.4  
+# the 1.4 is a lump factor to take in overhead
+# 4096 is a 4k page
+# 8 to bits to bytes
+# 19200 is the baud rate
 
 class Entry(object):
     """
@@ -106,7 +110,11 @@ class Entry(object):
         """
         provide a repr
         """
-        return "<{0} {1} {2} {3}>".format(self.typ, self.date, self.duration, self.JAS)
+        return "<{0} {1} {2} {3} {4}>".format(self.typ, 
+                                              self.date.isoformat(), 
+                                              self.duration, 
+                                              self.JAS, 
+                                              self.priority)
 
 
 class Request(list):
@@ -131,13 +139,16 @@ class Request(list):
         # make sure it is an entry first
         if not isinstance(entry, Entry):
             raise(ValueError("Bad Entry object given"))
+        if entry in self:
+            warnings.warn("Entry was already in request, not added again")
         self.append( entry )
 
     def sortEntries(self):
         """
         sort all the entries into priority order
         """
-        self = sorted(self, key=lambda x: x.priority) # big to little
+        self[:] = sorted(self, key=lambda x: x.priority, reverse=True) # big to little
+        # self = sorted(self, key=lambda x: x.priority, reverse=False) # little to big
 
     @property
     def downlinkTime(self):
@@ -188,6 +199,7 @@ class Request(list):
         """
         build the file and output it
         """
+        self.sortEntries()
         for sc in [1,2]:
             filename = os.path.expanduser(os.path.expandvars(os.path.join(self.directory, self._makeFilename(sc))))
             while os.path.isfile(filename):
