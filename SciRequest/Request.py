@@ -29,7 +29,7 @@ class Entry(object):
     class to hold a single entry in a Request
     """
     def __init__(self, sc, typ, date, duration, priority, JAS=None):
-        if sc not in [1,2] and sc not in ['1', '2']:
+        if sc not in [1,2,3,4] and sc not in ['1', '2', '3', '4']:
             raise(ValueError('Spacecraft, "{0}", not understood, must be 1 or 2'.format(sc)))
         self.sc = sc
         if typ.upper() not in typeDict:
@@ -167,7 +167,7 @@ class Request(list):
         """
         build a request filename for each filename based on the entries
         """
-        if sc not in [1,2] and sc not in ['1', '2']:
+        if sc not in [1,2,3,4] and sc not in ['1', '2', '3', '4']:
             raise(ValueError('Spacecraft, "{0}", not understood, must be 1 or 2'.format(sc)))
         return "FU_{0}_REQ_{1:04}{2:02}{3:02}_v{4:02}.csv".format(sc,
                     self.date.year, self.date.month, self.date.day,
@@ -177,8 +177,8 @@ class Request(list):
         """
         build a header for the file
         """
-        if sc not in [1,2] and sc not in ['1', '2']:
-            raise(ValueError('Spacecraft, "{0}", not understood, must be 1 or 2'.format(sc)))
+        if sc not in [1,2,3,4] and sc not in ['1', '2', '3', '4']:
+            raise(ValueError('Spacecraft, "{0}", not understood, must be 1, 2, 3, or 4'.format(sc)))
         header = """\
         # FIRE Science Priority Queue request file
         # FIREBIRD UNIT {0}
@@ -200,7 +200,7 @@ class Request(list):
         build the file and output it
         """
         self.sortEntries()
-        for sc in [1,2]:
+        for sc in [1,2,3,4]:
             filename = os.path.expanduser(os.path.expandvars(os.path.join(self.directory, self._makeFilename(sc))))
             while os.path.isfile(filename):
                 filename = self._makeFilename(sc, Request._extractVersion(filename)+1)
@@ -208,13 +208,15 @@ class Request(list):
             try:
                 with open(os.path.expanduser(os.path.expandvars(os.path.join(self.directory, filename))), 'w') as fp:
                     fp.writelines(header)
-                    outcntr = 0
+                    outcntr = []
                     for v in self:
                         if v.sc == sc:
+                            if str(v) in outcntr:
+                                continue
                             fp.writelines(str(v) + '\n')
-                            outcntr +=  1
+                            outcntr.append(str(v))
                     fp.writelines('\n')
-                    if not outcntr:
+                    if not len(outcntr):
                         raise(RuntimeError('No data for sc {0} in Request'.format(sc)))
             except RuntimeError:
                 os.remove(filename)
