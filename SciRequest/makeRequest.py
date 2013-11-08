@@ -11,11 +11,15 @@
 import datetime
 from optparse import OptionParser
 import os
+import readline
+import warnings
 
 import dateutil.parser as dup
 
 from Request import Entry
 from Request import Request
+
+readline.parse_and_bind('enable-keypad')
 
 typeDict = {'HIRES':None,
             'CONTEXT':None,
@@ -27,12 +31,12 @@ request = None
 
 def make_request():
     global request
-    print('Enter request date or enter for today (YYMMDD)')
+    print('Enter request date or enter for today (YYYYMMDD)')
     line = raw_input(': ')
     if not line:
         rdate = datetime.datetime.utcnow().date()
     else:
-        rdate = datetime.date.strptime(line, '%Y%m%d')
+        rdate = datetime.datetime.strptime(line, '%Y%m%d').date()
     request = Request(date=rdate)
 
     
@@ -60,6 +64,9 @@ def input_loop():
         line = raw_input(':::: ')
         if line in ['stop', 'write']:
             break
+        if line == 'help':
+            print_inst()
+            continue
         # make an entry from the input
         line = line.split(',')
         line = [v.strip() for v in line]
@@ -96,10 +103,17 @@ def input_loop():
         if pri <= 0:
             print("** invalid priority**")
             continue
-            
-        e = Entry(sc, typ, date, dur, pri)
-        print('{0}: created').format(e)
-        request.addEntry(e)
+
+        warnings.simplefilter('error')
+        try:
+            entry = Entry(sc, typ, date, dur, pri)
+        except UserWarning, e:
+            warnings.simplefilter('ignore')
+            entry = Entry(sc, typ, date, dur, pri)
+            print('** {0} **'.format(e))
+        t1 = date + datetime.timedelta(seconds=dur)
+        print('{0}: created    --  {1} to {2}').format(entry, date.isoformat(), t1.isoformat())
+        request.addEntry(entry)
 
     if line == 'write':
         request.sortEntries()
