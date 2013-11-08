@@ -520,6 +520,9 @@ class datatimesPage(list):
         for ii in range(0, len(dat), self._datalen): # the index of the start of each FIRE data
             stop = ii+self._datalen+self._majorTimelen  # 24 bytes of data and 2 for a minor time stamp
             self.major_data(dat[ii:stop])
+        # cull any bad data
+        ## this has None in place of data
+        self = [v for v in self if None not in v]    
         # sort the data
         self = sorted(self, key = lambda x: x[0])
 
@@ -586,6 +589,9 @@ class datatimes(object):
         h = []
         for p in pages:
             h.extend(datatimesPage(p))
+        # cull any bad data
+        ## this has None in place of data
+        h = [v for v in h if None not in v]    
         # sort the data
         h = sorted(h, key = lambda x: x[0])
         return datatimes(h)
