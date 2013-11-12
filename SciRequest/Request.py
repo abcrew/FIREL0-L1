@@ -169,7 +169,7 @@ class Request(list):
         """
         if sc not in [1,2,3,4] and sc not in ['1', '2', '3', '4']:
             raise(ValueError('Spacecraft, "{0}", not understood, must be 1 or 2'.format(sc)))
-        return "FU_{0}_REQ_{1:04}{2:02}{3:02}_v{4:02}.csv".format(sc,
+        return "FU_{0}_SPQ_{1:04}{2:02}{3:02}_v{4:02}.csv".format(sc,
                     self.date.year, self.date.month, self.date.day,
                     version)
 
