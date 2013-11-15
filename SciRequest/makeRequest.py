@@ -89,58 +89,57 @@ def input_loop():
                 tmp = line[1].split(':')
                 date =  datetime.datetime.strptime(tmp[1], '%Y%m%d')
                 date2 = date
-                warnings.simplefilter('ignore')
                 while date2.day == date.day: 
                     entry = Entry(sc, 'CONFIG', date2, int(typeDict['CONFIG']['dataPerBlock'])+3 , 900)
                     print('{0}: created    --  {1} to {2}').format(entry, entry.date.isoformat(), entry.endDate.isoformat())
                     request.addEntry(entry)
                     date2 += datetime.timedelta(seconds=entry.duration)
-                warnings.simplefilter('error')
                 continue               
                 
-        if len(line) != 5:
+        elif len(line) != 5:
             print('** input much be 5 entries **')
             continue
-        try:
-            sc = int(line[0])
-        except ValueError:
-            print("** invalid sc [1,2,3,4]**")
-            continue
-        typ = line[1].upper()
-        if typ not in typeDict:
-            print("** invalid type [{0}]**".format(' '.join(typeDict.keys())))
-            continue
-        try:
-            date = datetime.datetime.strptime(line[2], '%Y%m%dT%H:%M:%S')
-        except ValueError, e:
-            print e
-            continue
-        try:
-            dur = int(line[3])
-        except ValueError:
-            print("** invalid duration**")
-            continue
-        if dur <= 0:
-            print("** invalid duration**")
-            continue
-        try:
-            pri = int(line[4])
-        except ValueError:
-            print("** invalid priority**")
-            continue
-        if pri <= 0:
-            print("** invalid priority**")
-            continue
+        else:
+            try:
+                sc = int(line[0])
+            except ValueError:
+                print("** invalid sc [1,2,3,4]**")
+                continue
+            typ = line[1].upper()
+            if typ not in typeDict:
+                print("** invalid type [{0}]**".format(' '.join(typeDict.keys())))
+                continue
+            try:
+                date = datetime.datetime.strptime(line[2], '%Y%m%dT%H:%M:%S')
+            except ValueError, e:
+                print e
+                continue
+            try:
+                dur = int(line[3])
+            except ValueError:
+                print("** invalid duration**")
+                continue
+            if dur <= 0:
+                print("** invalid duration**")
+                continue
+            try:
+                pri = int(line[4])
+            except ValueError:
+                print("** invalid priority**")
+                continue
+            if pri <= 0:
+                print("** invalid priority**")
+                continue
 
-        warnings.simplefilter('error')
-        try:
-            entry = Entry(sc, typ, date, dur, pri)
-        except UserWarning, e:
-            warnings.simplefilter('ignore')
-            entry = Entry(sc, typ, date, dur, pri)
-            print('** {0} **'.format(e))
-        print('{0}: created    --  {1} to {2}').format(entry, entry.date.isoformat(), entry.endDate.isoformat())
-        request.addEntry(entry)
+            warnings.simplefilter('error')
+            try:
+                entry = Entry(sc, typ, date, dur, pri)
+            except UserWarning, e:
+                warnings.simplefilter('ignore')
+                entry = Entry(sc, typ, date, dur, pri)
+                print('** {0} **'.format(e))
+            print('{0}:  CREATED    --   {1} to {2}').format(entry, entry.date.isoformat(), entry.endDate.isoformat())
+            request.addEntry(entry)
 
     if line == 'write':
         request.sortEntries()
