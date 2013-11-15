@@ -3,8 +3,6 @@ import datetime
 import time
 import os
 
-import numpy as np
-
 from CCITT_CRC16 import CRCfromString
 
 class BIRDpacket(object):
@@ -29,6 +27,13 @@ class BIRDpacket(object):
         self.crc = self.raw.split(' ')[11+int(self.datalen, 16):11+int(self.datalen, 16)+2]
         self.valid_crc = self._crc_valid()
 
+    def __eq__(self, other):
+        attrs = ['data', 'srcid', 'destid']
+        for a in attrs:
+            if getattr(self, a) != getattr(other, a):
+                return False
+        return True
+        
     def _crc_valid(self):
         """
         if the calcuated CRC matches what is in the packet True, False otherwise
@@ -60,8 +65,8 @@ class BIRDpackets(list):
         dat = [v.strip() for v in dat]
         self.filename = infile
         self.extend([BIRDpacket(v, self.filename) for v in dat])
-
+            
     def __str__(self):
-        return("{0} packets: {1} bad CRC".format(len(self), np.sum([v.valid_crc for v in self if not v.valid_crc])))
+        return("{0} packets: {1} bad CRC".format(len(self), int(sum([v.valid_crc for v in self if not v.valid_crc]))))
 
     __repr__ = __str__
