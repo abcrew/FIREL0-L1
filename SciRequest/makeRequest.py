@@ -18,14 +18,10 @@ import dateutil.parser as dup
 
 from Request import Entry
 from Request import Request
+from Request import typeDict
 
 readline.parse_and_bind('enable-keypad')
 
-typeDict = {'HIRES':None,
-            'CONTEXT':None,
-            'MICRO_BURST':None,
-            'CONFIG':None,
-            'DATA_TIMES':None,}
 
 request = None
 
@@ -47,6 +43,7 @@ def print_inst():
     txt = """**Tool to prepare a FIREBIRD data request**
     enter some number of requests in this way:
     sc, typ, date, duration, priority 
+    (e.g. 3, MICRO_BURST, 20130821T00:40:00, 40, 30)
 
     sc may be 1,2,3,4
     type may be {0}
@@ -55,12 +52,17 @@ def print_inst():
     priority is an integer, higher values higher priority
 
     write writes the comand files
-    quit quits""".format(' '.join(typeDict.keys()))
+    quit quits
+
+    ShortCuts:
+    sc, DATA_TIMES::   - creates a DATA_TIMES entry from now forward (all always downlinked, priority=1000)
+    sc, CONFIG:YYYYMMDD:     - creates N CONFIG entires to fill a day (will skip time with no data, priority=900)
+    """.format(' '.join(typeDict.keys()))
     print(txt)
 
 def input_loop():
     line = ''
-    while line != 'quit' and line != 'write':
+    while True:
         line = raw_input(':::: ')
         if line in ['stop', 'write']:
             break
@@ -70,6 +72,32 @@ def input_loop():
         # make an entry from the input
         line = line.split(',')
         line = [v.strip() for v in line]
+        # is the input a ShortCut?
+        if len(line) == 2:
+            try:
+                sc = int(line[0])
+            except ValueError:
+                print("** invalid sc [1,2,3,4]**")
+                continue            
+            if line[1].upper() == 'DATA_TIMES::':
+                entry = Entry(sc, 'DATA_TIMES', datetime.datetime.utcnow().replace(microsecond=0), 1, 1000)
+                print('{0}: created    --  {1} to {2}').format(entry, entry.date.isoformat(), entry.endDate.isoformat())
+                request.addEntry(entry)
+                continue
+            elif line[1].upper().startswith('CONFIG'):
+                ### TODO add checking for where there is actually data
+                tmp = line[1].split(':')
+                date =  datetime.datetime.strptime(tmp[1], '%Y%m%d')
+                date2 = date
+                warnings.simplefilter('ignore')
+                while date2.day == date.day: 
+                    entry = Entry(sc, 'CONFIG', date2, int(typeDict['CONFIG']['dataPerBlock'])+3 , 900)
+                    print('{0}: created    --  {1} to {2}').format(entry, entry.date.isoformat(), entry.endDate.isoformat())
+                    request.addEntry(entry)
+                    date2 += datetime.timedelta(seconds=entry.duration)
+                warnings.simplefilter('error')
+                continue               
+                
         if len(line) != 5:
             print('** input much be 5 entries **')
             continue
@@ -111,7 +139,6 @@ def input_loop():
             warnings.simplefilter('ignore')
             entry = Entry(sc, typ, date, dur, pri)
             print('** {0} **'.format(e))
-        t1 = date + datetime.timedelta(seconds=dur)
         print('{0}: created    --  {1} to {2}').format(entry, entry.date.isoformat(), entry.endDate.isoformat())
         request.addEntry(entry)
 
