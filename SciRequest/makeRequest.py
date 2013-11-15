@@ -112,7 +112,7 @@ def input_loop():
             entry = Entry(sc, typ, date, dur, pri)
             print('** {0} **'.format(e))
         t1 = date + datetime.timedelta(seconds=dur)
-        print('{0}: created    --  {1} to {2}').format(entry, date.isoformat(), t1.isoformat())
+        print('{0}: created    --  {1} to {2}').format(entry, entry.date.isoformat(), entry.endDate.isoformat())
         request.addEntry(entry)
 
     if line == 'write':
