@@ -35,6 +35,8 @@ class Entry(object):
         if typ.upper() not in typeDict:
             raise(ValueError('Type, "{0}", not recognized, must be one of {1}'.format(typ.upper(), typeDict.keys())))
         self.typ = typ.upper()
+        if not isinstance(date, datetime.datetime):
+            raise(TypeError('Invalid datetime.datetime object for date'))
         self.date = date
         self.duration = int(duration)
         self.priority = int(priority)
