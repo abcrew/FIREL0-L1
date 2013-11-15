@@ -110,10 +110,21 @@ class Entry(object):
         """
         get the string representation of a Entry for file output
         """
-        ans = ', '.join([Entry._toStr(self.typ),
-                         Entry._toStr(self.date),
-                         Entry._toStr(self.duration),
-                         Entry._toStr(self.JAS) ])
+        if self.typ == 'DATA_TIMES':
+            ans = ', '.join([Entry._toStr(self.typ),
+                             '',
+                             '',
+                             '', 
+                             '', 
+                             '', 
+                             '', 
+                             '',                          
+                             Entry._toStr(self.JAS) ])
+        else:
+            ans = ', '.join([Entry._toStr(self.typ),
+                             Entry._toStr(self.date),
+                             Entry._toStr(self.duration),
+                             Entry._toStr(self.JAS) ])
         return ans
 
     def __repr__(self):
