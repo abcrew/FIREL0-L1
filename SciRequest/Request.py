@@ -13,12 +13,12 @@ import warnings
 warnings.simplefilter('always')
 
 # this is type, then seconds of data per block
-typeDict = {'HIRES':{'dataPerBlock':2.94375},
+typeDict = {'HIRES':{'dataPerBlock':2.94},
             'CONTEXT':{'dataPerBlock':1752},
             'MICRO_BURST':{'dataPerBlock':584},
-            'CONFIG':{'dataPerBlock':54.48},
+            'CONFIG':{'dataPerBlock':54.5},
             'DATA_TIMES':{'dataPerBlock':2000}} # This was a TBD and 2000 was made up
-secondsPerPage = 4096*8/19200.*1.4  
+secondsPerPage = 4096*8/19200.*1.4
 # the 1.4 is a lump factor to take in overhead
 # 4096 is a 4k page
 # 8 to bits to bytes
@@ -110,10 +110,10 @@ class Entry(object):
         """
         provide a repr
         """
-        return "<{0} {1} {2} {3} {4}>".format(self.typ, 
-                                              self.date.isoformat(), 
-                                              self.duration, 
-                                              self.JAS, 
+        return "<{0} {1} {2} {3} {4}>".format(self.typ,
+                                              self.date.isoformat(),
+                                              self.duration,
+                                              self.JAS,
                                               self.priority)
 
 
