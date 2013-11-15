@@ -47,6 +47,14 @@ class Entry(object):
                 self._calcDownlink()
             warnings.warn("Downlink time was longer than allowed, duration shortened to {0}".format(self.duration))
 
+    @property
+    def endDate(self):
+        """
+        return the end time of the request
+        this is self.date+duration
+        """
+        return self.date + datetime.timedelta(seconds=self.duration)
+            
 #    def __eq__(self, other):
 #        """
 #        if the pieces match they are equal
