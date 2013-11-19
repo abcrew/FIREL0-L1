@@ -242,4 +242,7 @@ class Request(list):
             except RuntimeError:
                 os.remove(filename)
 
+            print('Wrote: {0}'.format(filename))
+
+
 
