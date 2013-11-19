@@ -45,7 +45,7 @@ def print_inst():
     """
     txt = """**Tool to prepare a FIREBIRD data request**
     enter some number of requests in this way:
-    sc, typ, date, duration, priority 
+    sc, type, date, duration, priority 
     (e.g. 3, MICRO_BURST, 20130821T00:40:00, 40, 30)
 
     sc may be 1,2,3,4
@@ -54,12 +54,12 @@ def print_inst():
     duration in seconds
     priority is an integer, higher values higher priority
 
-    write writes the comand files
+    write writes the command files
     quit quits
 
     ShortCuts:
     sc, DATA_TIMES::   - creates a DATA_TIMES entry from now forward (all always downlinked, priority=1000)
-    sc, CONFIG:YYYYMMDD:     - creates N CONFIG entires to fill a day (will skip time with no data, priority=900)
+    sc, CONFIG:YYYYMMDD:     - creates N CONFIG entries to fill a day (will skip time with no data, priority=900)
     """.format(' '.join(typeDict.keys()))
     print(txt)
 
@@ -84,7 +84,7 @@ def input_loop():
                 continue            
             if line[1].upper() == 'DATA_TIMES::':
                 entry = Entry(sc, 'DATA_TIMES', datetime.datetime.utcnow().replace(microsecond=0), 1, 1000)
-                print('{0}: created    --  {1} to {2}').format(entry, entry.date.isoformat(), entry.endDate.isoformat())
+                print('{0}: CREATED    --  {1} to {2}').format(entry, entry.date.isoformat(), entry.endDate.isoformat())
                 request.addEntry(entry)
                 continue
             elif line[1].upper().startswith('CONFIG'):
