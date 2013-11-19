@@ -11,7 +11,11 @@
 import datetime
 from optparse import OptionParser
 import os
-import readline
+try:
+    import readline
+    readline.parse_and_bind('enable-keypad')
+except ImportError:
+    pass
 import warnings
 
 import dateutil.parser as dup
@@ -20,7 +24,6 @@ from Request import Entry
 from Request import Request
 from Request import typeDict
 
-readline.parse_and_bind('enable-keypad')
 
 
 request = None
