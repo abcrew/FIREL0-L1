@@ -57,7 +57,8 @@ class hires(object):
         dat['Epoch'].attrs['VAR_NOTES'] = 'Epoch at each hi-res measurement'
         dat['hr0'] = dm.dmarray(counts[:,0:6])
         dat['hr0'].attrs['CATDESC'] = 'Detector 0 hi-res'
-        dat['hr0'].attrs['FIELDNAM'] = 'hr0'
+        dat['hr0'].attrs['ELEMENT_LABELS'] = ["hr0-0", "hr0-1", "hr0-2", "hr0-3", "hr0-4", "hr0-5"],  
+        dat['hr0'].attrs['ELEMENT_NAMES'] =  ["hr0-0", "hr0-1", "hr0-2", "hr0-3", "hr0-4", "hr0-5"],  
         dat['hr0'].attrs['FILLVAL'] = -1e-31
         dat['hr0'].attrs['LABLAXIS'] = 'Detector 0 hi-res'
         dat['hr0'].attrs['SCALETYP'] = 'log'
@@ -66,10 +67,11 @@ class hires(object):
         dat['hr0'].attrs['VALIDMAX'] = 2**16-1
         dat['hr0'].attrs['VAR_TYPE'] = 'data'
         dat['hr0'].attrs['VAR_NOTES'] = 'hr0 for each channel'
-        dat['hr0'].attrs['DEPEND_0'] = 'Epoch'
+        dat['hr0'].attrs['DEPENDNAME_0'] = 'Epoch'
         dat['hr1'] = dm.dmarray(counts[:,6:])
         dat['hr1'].attrs['CATDESC'] = 'Detector 1 hi-res'
-        dat['hr1'].attrs['FIELDNAM'] = 'hr1'
+        dat['hr1'].attrs['ELEMENT_LABELS'] = ["hr1-0", "hr1-1", "hr1-2", "hr1-3", "hr1-4", "hr1-5"],  
+        dat['hr1'].attrs['ELEMENT_NAMES'] =  ["hr1-0", "hr1-1", "hr1-2", "hr1-3", "hr1-4", "hr1-5"],  
         dat['hr1'].attrs['FILLVAL'] = -1e-31
         dat['hr1'].attrs['LABLAXIS'] = 'Detector 1 hi-res'
         dat['hr1'].attrs['SCALETYP'] = 'log'
@@ -78,7 +80,7 @@ class hires(object):
         dat['hr1'].attrs['VALIDMAX'] = 2**16-1
         dat['hr1'].attrs['VAR_TYPE'] = 'data'
         dat['hr1'].attrs['VAR_NOTES'] = 'hr1 for each channel'
-        dat['hr1'].attrs['DEPEND_0'] = 'Epoch'
+        dat['hr1'].attrs['DEPENDNAME_0'] = 'Epoch'
         self.data = dat
 
     def write(self, filename, hdf5=False):
