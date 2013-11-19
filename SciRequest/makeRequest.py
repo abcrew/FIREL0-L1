@@ -155,7 +155,7 @@ if __name__ == '__main__':
                   help="Force an overwrite, default=False", default=False)
     (options, args) = parser.parse_args()
 
-    if len(args) < 1:
+    if len(args) > 1:
         parser.error("incorrect number of arguments")
 
 #==============================================================================
@@ -173,10 +173,11 @@ if __name__ == '__main__':
         
 
 #    outname = args[0]
-    dtfiles = [os.path.expandvars(os.path.expanduser(v)) for v in args[:]]
-    for f in dtfiles:
-        if not os.path.isfile(f):
-            parser.error("Data_Times file: {0} did not exist")
+    if len(args) != 0:
+        dtfiles = [os.path.expandvars(os.path.expanduser(v)) for v in args[:]]
+        for f in dtfiles:
+            if not os.path.isfile(f):
+                parser.error("Data_Times file: {0} did not exist")
 
     make_request()
     print_inst()
