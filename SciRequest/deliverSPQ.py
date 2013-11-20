@@ -9,12 +9,10 @@
 
 # standard library includes (alphabetical)
 import ConfigParser
-import datetime
 import glob
-from optparse import OptionParser
 import os
+from optparse import OptionParser
 import sys
-import warnings
 
 try:
     import paramiko
@@ -31,7 +29,7 @@ def readconfig(configFilename):
     # Read each parameter in turn
     ans = {}
     for section in sections:
-        ans[section] = dict(cfg.items(section))               
+        ans[section] = dict(cfg.items(section))
     return ans
 
 def makeSFTP(config, port=22):
@@ -60,9 +58,9 @@ def upload(sftp, fname, config):
     section = [v for v in config if str(fu) in v][0]
     if not section:
         raise(ValueError('Invalid FIREBIRD unit'))
-    attr = sftp.put(fname, config[section]['destination'])
-    if not attr:
-        raise(ValueError('Upload unsuccessful'))
+    attr = sftp.put(os.path.abspath(fname), os.path.join(config[section]['destination'], fname))
+#    if not attr:
+#        raise(ValueError('Upload unsuccessful'))
 
 def localFiles(localdir):
     """
@@ -104,10 +102,10 @@ if __name__ == '__main__':
                   action="store_true", dest="force",
                   help="Force an overwrite, default=False", default=False)
     parser.add_option("-c", "--config", dest="config",
-                  help="Configuration file to use, default=FIREBIRD_deliver.conf", 
+                  help="Configuration file to use, default=FIREBIRD_deliver.conf",
                   default='./FIREBIRD_deliver.conf')
     parser.add_option("-d", "--dryrun", dest="dryrun",
-                  help="Only dryrun, do not actually upload", action='store_true',  
+                  help="Only dryrun, do not actually upload", action='store_true',
                   default=False)
 
     (options, args) = parser.parse_args()
@@ -118,7 +116,7 @@ if __name__ == '__main__':
     # get local files
     localfiles = localFiles(args[0])
     fus = set([_whichFB(v) for v in localfiles])
-    
+
     # read config
     config = readconfig(options.config)
     # connect
@@ -136,8 +134,8 @@ if __name__ == '__main__':
             upload(sftp, f, config)
             print('Uploaded: {0}'.format(f))
         else:
-            print('<DRYRUN> Uploaded: {0}'.format(f))            
+            print('<DRYRUN> Uploaded: {0}'.format(f))
     if not filestoupload:
         print('No new files to upload')
-        
+
     sftp.close()
