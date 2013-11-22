@@ -58,9 +58,7 @@ def upload(sftp, fname, config):
     section = [v for v in config if str(fu) in v][0]
     if not section:
         raise(ValueError('Invalid FIREBIRD unit'))
-    attr = sftp.put(os.path.abspath(fname), os.path.join(config[section]['destination'], fname))
-#    if not attr:
-#        raise(ValueError('Upload unsuccessful'))
+    sftp.put(os.path.abspath(fname), os.path.join(config[section]['destination'], fname))
 
 def localFiles(localdir):
     """
