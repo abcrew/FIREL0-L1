@@ -50,7 +50,7 @@ def print_inst():
 
     sc may be 1,2,3,4
     type may be {0}
-    date in the format YYYYMMDDThh:mm:ss
+    date in the format YYYYMMDDThh:mm:ss or YYYY-MM-DDThh:mm:ss
     duration in seconds
     priority is an integer, higher values higher priority
 
@@ -63,7 +63,7 @@ def print_inst():
     """.format(' '.join(typeDict.keys()))
     print(txt)
 
-def input_loop():
+def input_loop(datatimes=None):
     line = ''
     while True:
         line = raw_input(':::: ')
@@ -115,8 +115,11 @@ def input_loop():
             try:
                 date = datetime.datetime.strptime(line[2], '%Y%m%dT%H:%M:%S')
             except ValueError, e:
-                print e
-                continue
+                try:
+                    date = datetime.datetime.strptime(line[2], '%Y-%m-%dT%H:%M:%S')
+                except ValueError, e:
+                    print e
+                    continue
             try:
                 dur = int(line[3])
             except ValueError:
@@ -147,10 +150,21 @@ def input_loop():
     if line == 'write':
         request.sortEntries()
         request.toFile()
-        
 
+
+def parseData_Times(fname):
+    if fname is None:
+        return None
+    with open(fname, 'r') as fp:
+        data = fp.readlines()
+
+    data = [v.strip() for v in data if v[0] != '#']
+    data = [v.split(' ') for v in data]
+    data = [ [dup.parse(v[0]), dup.parse(v[1])] for v in data] 
+    return data
+    
 if __name__ == '__main__':
-    usage = "usage: %prog [options] Data_Times [[Data_Times]...]"
+    usage = "usage: %prog [options] [Data_Times]"
     parser = OptionParser(usage=usage)
 
     parser.add_option("-f", "--force",
@@ -177,15 +191,18 @@ if __name__ == '__main__':
 
 #    outname = args[0]
     if len(args) != 0:
-        dtfiles = [os.path.expandvars(os.path.expanduser(v)) for v in args[:]]
-        for f in dtfiles:
-            if not os.path.isfile(f):
-                parser.error("Data_Times file: {0} did not exist")
-
+        dtfile = args[0]
+        if not os.path.isfile(dtfile):
+            parser.error("Data_Times file: {0} did not exist")
+    else:
+        dtfile = None
+            
+    times = parseData_Times(dtfile)
+                
     make_request()
     print_inst()
 
-    input_loop()
+    input_loop(times)
 
 
 

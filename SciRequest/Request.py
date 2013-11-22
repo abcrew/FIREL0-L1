@@ -28,7 +28,7 @@ class Entry(object):
     """
     class to hold a single entry in a Request
     """
-    def __init__(self, sc, typ, date, duration, priority, JAS=None):
+    def __init__(self, sc, typ, date, duration, priority, JAS=None, datatimes=None):
         if sc not in [1,2,3,4] and sc not in ['1', '2', '3', '4']:
             raise(ValueError('Spacecraft, "{0}", not understood, must be 1 or 2'.format(sc)))
         self.sc = sc
@@ -42,6 +42,9 @@ class Entry(object):
         self.priority = int(priority)
         self.JAS = JAS
         self.downlinktime = None # to be filled by a calculation
+        self.datatimes = datatimes
+        if self.datatimes is not None:
+            self._checkDataTimes()
         self._calcDownlink()
         if self.downlinktime > 60.0: # if too long
             while self.downlinktime > 60.0: # just keep reducing it until it is ok
@@ -49,6 +52,14 @@ class Entry(object):
                 self._calcDownlink()
             warnings.warn("Downlink time was longer than allowed, duration shortened to {0}".format(self.duration))
 
+    def _checkDataTimes(self):
+        """
+        given the request we are creating make sure it is inside datatimes, clip if not
+        """
+        pass
+                
+        
+            
     @property
     def endDate(self):
         """
@@ -239,10 +250,11 @@ class Request(list):
                     fp.writelines('\n')
                     if not len(outcntr):
                         raise(RuntimeError('No data for sc {0} in Request'.format(sc)))
+                print('Wrote: {0}'.format(filename))
+
             except RuntimeError:
                 os.remove(filename)
 
-            print('Wrote: {0}'.format(filename))
 
 
 
