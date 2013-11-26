@@ -23,6 +23,7 @@ import dateutil.parser as dup
 from Request import Entry
 from Request import Request
 from Request import typeDict
+from Request import parseData_Times
 
 warnings.simplefilter('always')
 
@@ -153,16 +154,6 @@ def input_loop(datatimes=None):
         request.toFile()
 
 
-def parseData_Times(fname):
-    if fname is None:
-        return None
-    with open(fname, 'r') as fp:
-        data = fp.readlines()
-
-    data = [v.strip() for v in data if v[0] != '#']
-    data = [v.split(' ') for v in data]
-    data = [ [dup.parse(v[0]).replace(microsecond=0), dup.parse(v[1]).replace(microsecond=0)] for v in data] 
-    return data
     
 if __name__ == '__main__':
     usage = "usage: %prog [options] [Data_Times]"

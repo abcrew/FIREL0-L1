@@ -27,11 +27,32 @@ secondsPerPage = 4096*8/19200.*1.4
 # 8 to bits to bytes
 # 19200 is the baud rate
 
+
+def parseData_Times(fname):
+    if fname is None:
+        return None
+    with open(fname, 'r') as fp:
+        data = fp.readlines()
+
+    data = [v.strip() for v in data if v[0] != '#']
+    data = [v.split(' ') for v in data]
+    data = [ [dup.parse(v[0]).replace(microsecond=0), dup.parse(v[1]).replace(microsecond=0)] for v in data] 
+    return data
+
 class Entry(object):
     """
     class to hold a single entry in a Request
     """
-    def __init__(self, sc, typ, date, duration, priority, JAS=None, datatimes=None):
+    def __init__(self, sc, typ, date, duration, priority, JAS=None, datatimes=None, force=False):
+        """
+        sc - spacecraft number.  1,2,3,4
+        typ - type of data to downlink. HIRES, CONTEXT, MICRO_BURST, CONFIG, DATA_TIMES
+        date - datetime.datetime to start the data request
+        duration - int number of seconds to download
+        priority - int priority to order Entry objects in a Request
+        datatimes - list of lists from data_times file, parsed by parseData_Times()
+        force - do not check or duration and FIRE actually being on
+        """
         if sc not in [1,2,3,4] and sc not in ['1', '2', '3', '4']:
             raise(ValueError('Spacecraft, "{0}", not understood, must be 1 or 2'.format(sc)))
         self.sc = sc
@@ -46,10 +67,10 @@ class Entry(object):
         self.JAS = JAS
         self.downlinktime = None # to be filled by a calculation
         self.datatimes = datatimes
-        if self.datatimes is not None:
+        if self.datatimes is not None and not force:
             self._checkDataTimes()
         self._calcDownlink()
-        if self.downlinktime > 60.0: # if too long
+        if self.downlinktime > 60.0 and not force: # if too long
             while self.downlinktime > 60.0: # just keep reducing it until it is ok
                 self.duration -= 1
                 self._calcDownlink()
