@@ -105,7 +105,7 @@ def input_loop(datatimes=None):
                 date2 = date
                 while date2.day == date.day: 
                     try:
-                        entry = Entry(sc, 'CONFIG', date2, int(typeDict['CONFIG']['dataPerBlock'])+3 , 900, datatimes=datatimes) # hi pri
+                        entry = Entry(sc, 'CONFIG', date2, int(typeDict['CONFIG']['dataPerBlock'])*60 , 900, datatimes=datatimes) # hi pri
                     except FIREOffException:
                         date2 += datetime.timedelta(seconds=1)
                         continue
@@ -119,7 +119,7 @@ def input_loop(datatimes=None):
                 date2 = date
                 while date2.day == date.day: 
                     try:
-                        entry = Entry(sc, 'CONTEXT', date2, int(typeDict['CONTEXT']['dataPerBlock'])+3 , 700, datatimes=datatimes) # hi pri
+                        entry = Entry(sc, 'CONTEXT', date2, int(typeDict['CONTEXT']['dataPerBlock'])*60 , 700, datatimes=datatimes) # hi pri
                     except FIREOffException:
                         date2 += datetime.timedelta(seconds=1)
                         continue
@@ -133,7 +133,7 @@ def input_loop(datatimes=None):
                 date2 = date
                 while date2.day == date.day: 
                     try:
-                        entry = Entry(sc, 'MICRO_BURST', date2, int(typeDict['MICRO_BURST']['dataPerBlock'])+3 , 500, datatimes=datatimes) 
+                        entry = Entry(sc, 'MICRO_BURST', date2, int(typeDict['MICRO_BURST']['dataPerBlock'])*60 , 500, datatimes=datatimes) 
                     except FIREOffException:
                         date2 += datetime.timedelta(seconds=1)
                         continue
