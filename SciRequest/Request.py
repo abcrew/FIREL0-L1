@@ -10,6 +10,9 @@ import textwrap
 import os
 import warnings
 
+class FIREOffException(Exception):
+    pass
+
 warnings.simplefilter('always')
 
 # this is type, then seconds of data per block
@@ -55,10 +58,30 @@ class Entry(object):
     def _checkDataTimes(self):
         """
         given the request we are creating make sure it is inside datatimes, clip if not
+
+        This file is organized in lines of on-off-on-off
+        The first line always represents an on
+        The file is always sorted by the sc
         """
-        pass
-                
-        
+        ontimes  = self.datatimes[::2]
+        offtimes = self.datatimes[1::2]
+        # is the request date inside an on time?
+        df_on = []
+        for i, (v_on, v_off) in enumerate(ontimes):
+            if (self.date >= v_on and self.date < v_off):
+                df_on.append(i)
+        if not df_on:
+            raise(FIREOffException('FIRE was off for {0}'.format(self.date)))
+        if len(df_on) > 1:
+            raise(NotImplementedError('Start is in two on times, did not expect this'))
+        # is the request end inside an on time? 
+        end_date = self.date + datetime.timedelta(seconds=self.duration)
+
+        if end_date > ontimes[df_on[0]][1]:  # checking the off time
+            while end_date > ontimes[df_on[0]][1]: # just keep reducing it until it is ok
+                self.duration -= 1
+                end_date = self.date + datetime.timedelta(seconds=self.duration)
+            warnings.warn("Downlink time was longer than allowed, duration shortened to {0}".format(self.duration))
             
     @property
     def endDate(self):
