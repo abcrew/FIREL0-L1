@@ -752,7 +752,12 @@ class contextPage(list):
         start = self._datalen+self._majorTimelen
         for ii in range(start, len(dat), self._datalen+self._majorTimelen): # the index of the start of each FIRE data
             stop = ii+self._datalen+self._majorTimelen
-            self.major_data(dat[ii:stop])
+            try:
+                self.major_data(dat[ii:stop])
+            except IndexError: # malformed data for some reason, skip it
+                pass
+        # drop entries that start with None
+        self = [v for v in self if v[0] is not None]
         # sort the data
         self = sorted(self, key = lambda x: x[0])
 
@@ -826,6 +831,8 @@ class context(object):
         h = []
         for p in pages:
             h.extend(contextPage(p))
+        # drop entries that start with None
+        h = [v for v in h if v[0] is not None]
         # sort the data
         h = sorted(h, key = lambda x: x[0])
         return context(h)
