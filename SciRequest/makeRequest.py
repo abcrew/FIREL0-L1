@@ -18,15 +18,14 @@ except ImportError:
     pass
 import warnings
 
-import dateutil.parser as dup
-
 from Request import Entry
 from Request import Request
 from Request import typeDict
 from Request import parseData_Times
+from Request import FIREOffException
+
 
 warnings.simplefilter('always')
-
 
 request = None
 
@@ -37,7 +36,12 @@ def make_request():
     if not line:
         rdate = datetime.datetime.utcnow().date()
     else:
-        rdate = datetime.datetime.strptime(line, '%Y%m%d').date()
+        try:
+            rdate = datetime.datetime.strptime(line, '%Y%m%d').date()
+        except ValueError:
+            print('  ** Bad time format')
+            make_request()
+            return
     request = Request(date=rdate)
 
     
@@ -60,8 +64,10 @@ def print_inst():
     quit quits
 
     ShortCuts:
-    sc, DATA_TIMES::   - creates a DATA_TIMES entry from now forward (all always downlinked, priority=1000)
-    sc, CONFIG:YYYYMMDD:     - creates N CONFIG entries to fill a day (will skip time with no data, priority=900)
+    sc, DATA_TIMES::             - creates a DATA_TIMES entry from now forward (all always downlinked, priority=1000)
+    sc, CONFIG:YYYYMMDD:         - creates CONFIG entries to fill a day (will skip time with no data, priority=900)
+    sc, CONTEXT:YYYYMMDD:        - creates CONTEXT entries to fill a day (will skip time with no data, priority=700)
+    sc, MICRO_BURST:YYYYMMDDThh: - creates MICRO_BURST entries to fill an hour (will skip time with no data, priority=500)
     """.format(' '.join(typeDict.keys()))
     print(txt)
 
@@ -90,12 +96,43 @@ def input_loop(datatimes=None):
                 request.addEntry(entry)
                 continue
             elif line[1].upper().startswith('CONFIG'):
-                ### TODO add checking for where there is actually data
                 tmp = line[1].split(':')
                 date =  datetime.datetime.strptime(tmp[1], '%Y%m%d')
                 date2 = date
                 while date2.day == date.day: 
-                    entry = Entry(sc, 'CONFIG', date2, int(typeDict['CONFIG']['dataPerBlock'])+3 , 900)
+                    try:
+                        entry = Entry(sc, 'CONFIG', date2, int(typeDict['CONFIG']['dataPerBlock'])+3 , 900, datatimes=datatimes) # hi pri
+                    except FIREOffException:
+                        date2 += datetime.timedelta(seconds=1)
+                        continue
+                    print('{0}: created    --  {1} to {2}').format(entry, entry.date.isoformat(), entry.endDate.isoformat())
+                    request.addEntry(entry)
+                    date2 += datetime.timedelta(seconds=entry.duration)
+                continue
+            elif line[1].upper().startswith('CONTEXT'):
+                tmp = line[1].split(':')
+                date =  datetime.datetime.strptime(tmp[1], '%Y%m%d')
+                date2 = date
+                while date2.day == date.day: 
+                    try:
+                        entry = Entry(sc, 'CONTEXT', date2, int(typeDict['CONTEXT']['dataPerBlock'])+3 , 700, datatimes=datatimes) # hi pri
+                    except FIREOffException:
+                        date2 += datetime.timedelta(seconds=1)
+                        continue
+                    print('{0}: created    --  {1} to {2}').format(entry, entry.date.isoformat(), entry.endDate.isoformat())
+                    request.addEntry(entry)
+                    date2 += datetime.timedelta(seconds=entry.duration)
+                continue               
+            elif line[1].upper().startswith('MICRO_BURST'):
+                tmp = line[1].split(':')
+                date =  datetime.datetime.strptime(tmp[1], '%Y%m%dT%H')
+                date2 = date
+                while date2.day == date.day: 
+                    try:
+                        entry = Entry(sc, 'MICRO_BURST', date2, int(typeDict['MICRO_BURST']['dataPerBlock'])+3 , 500, datatimes=datatimes) 
+                    except FIREOffException:
+                        date2 += datetime.timedelta(seconds=1)
+                        continue
                     print('{0}: created    --  {1} to {2}').format(entry, entry.date.isoformat(), entry.endDate.isoformat())
                     request.addEntry(entry)
                     date2 += datetime.timedelta(seconds=entry.duration)
@@ -141,10 +178,10 @@ def input_loop(datatimes=None):
 
             warnings.simplefilter('error')
             try:
-                entry = Entry(sc, typ, date, dur, pri)
+                entry = Entry(sc, typ, date, dur, pri, datatimes=datatimes)
             except UserWarning, e:
                 warnings.simplefilter('always')
-                entry = Entry(sc, typ, date, dur, pri)
+                entry = Entry(sc, typ, date, dur, pri, datatimes=datatimes)
                 print('** {0} **'.format(e))
             print('{0}:  CREATED    --   {1} to {2}').format(entry, entry.date.isoformat(), entry.endDate.isoformat())
             request.addEntry(entry)
@@ -194,7 +231,7 @@ if __name__ == '__main__':
     make_request()
     print_inst()
 
-    input_loop(times)
+    input_loop(datatimes=times)
 
 
 
