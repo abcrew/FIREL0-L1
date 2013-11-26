@@ -16,6 +16,7 @@ try:
     readline.parse_and_bind('enable-keypad')
 except ImportError:
     pass
+import sys
 import warnings
 
 from Request import Entry
@@ -81,7 +82,10 @@ def input_loop(datatimes=None):
             print_inst()
             continue
         # make an entry from the input
-        line = line.split(',')
+        try:
+            line = line.split(',')
+        except AttributeError:
+            continue
         line = [v.strip() for v in line]
         # is the input a ShortCut?
         if len(line) == 2:
@@ -232,7 +236,7 @@ if __name__ == '__main__':
     print_inst()
 
     input_loop(datatimes=times)
-
+    
 
 
 
