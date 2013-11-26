@@ -24,6 +24,7 @@ from Request import Entry
 from Request import Request
 from Request import typeDict
 
+warnings.simplefilter('always')
 
 
 request = None
@@ -141,7 +142,7 @@ def input_loop(datatimes=None):
             try:
                 entry = Entry(sc, typ, date, dur, pri)
             except UserWarning, e:
-                warnings.simplefilter('ignore')
+                warnings.simplefilter('always')
                 entry = Entry(sc, typ, date, dur, pri)
                 print('** {0} **'.format(e))
             print('{0}:  CREATED    --   {1} to {2}').format(entry, entry.date.isoformat(), entry.endDate.isoformat())
@@ -160,7 +161,7 @@ def parseData_Times(fname):
 
     data = [v.strip() for v in data if v[0] != '#']
     data = [v.split(' ') for v in data]
-    data = [ [dup.parse(v[0]), dup.parse(v[1])] for v in data] 
+    data = [ [dup.parse(v[0]).replace(microsecond=0), dup.parse(v[1]).replace(microsecond=0)] for v in data] 
     return data
     
 if __name__ == '__main__':
