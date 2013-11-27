@@ -467,7 +467,6 @@ class config(object):
         #dat['Epoch'].attrs['FILLVAL'] = datetime.datetime(2100,12,31,23,59,59,999000)
         dat['Epoch'].attrs['LABLAXIS'] = 'Epoch'
         dat['Epoch'].attrs['SCALETYP'] = 'linear'
-        dat['Epoch'].attrs['UNITS'] = 'ms'
         dat['Epoch'].attrs['VALIDMIN'] = datetime.datetime(1990,1,1)
         dat['Epoch'].attrs['VALIDMAX'] = datetime.datetime(2029,12,31,23,59,59,999000)
         dat['Epoch'].attrs['VAR_TYPE'] = 'support_data'
@@ -553,7 +552,6 @@ class datatimes(object):
         dat['time'].attrs['LABLAXIS'] = 'Start or stop time'
         dat['time'].attrs['SCALETYP'] = 'linear'
         #dat['time'].attrs['UNITS'] = 'none'
-        dat['time'].attrs['UNITS'] = 'ms'
         dat['time'].attrs['VALIDMIN'] = datetime.datetime(1990,1,1)
         dat['time'].attrs['VALIDMAX'] = datetime.datetime(2029,12,31,23,59,59,999000)
         dat['time'].attrs['VAR_TYPE'] = 'support_data'
@@ -567,7 +565,6 @@ class datatimes(object):
         #dat['Epoch'].attrs['FILLVAL'] = datetime.datetime(2100,12,31,23,59,59,999000)
         dat['Epoch'].attrs['LABLAXIS'] = 'Epoch'
         dat['Epoch'].attrs['SCALETYP'] = 'linear'
-        dat['Epoch'].attrs['UNITS'] = 'ms'
         dat['Epoch'].attrs['VALIDMIN'] = datetime.datetime(1990,1,1)
         dat['Epoch'].attrs['VALIDMAX'] = datetime.datetime(2029,12,31,23,59,59,999000)
         dat['Epoch'].attrs['VAR_TYPE'] = 'support_data'
@@ -698,7 +695,6 @@ class burst(object):
         #dat['Epoch'].attrs['FILLVAL'] = datetime.datetime(2100,12,31,23,59,59,999000)
         dat['Epoch'].attrs['LABLAXIS'] = 'Epoch'
         dat['Epoch'].attrs['SCALETYP'] = 'linear'
-        dat['Epoch'].attrs['UNITS'] = 'ms'
         dat['Epoch'].attrs['VALIDMIN'] = datetime.datetime(1990,1,1)
         dat['Epoch'].attrs['VALIDMAX'] = datetime.datetime(2029,12,31,23,59,59,999000)
         dat['Epoch'].attrs['VAR_TYPE'] = 'support_data'
@@ -808,7 +804,6 @@ class context(object):
         #dat['Epoch'].attrs['FILLVAL'] = datetime.datetime(2100,12,31,23,59,59,999000)
         dat['Epoch'].attrs['LABLAXIS'] = 'Epoch'
         dat['Epoch'].attrs['SCALETYP'] = 'linear'
-        dat['Epoch'].attrs['UNITS'] = 'ms'
         dat['Epoch'].attrs['VALIDMIN'] = datetime.datetime(1990,1,1)
         dat['Epoch'].attrs['VALIDMAX'] = datetime.datetime(2029,12,31,23,59,59,999000)
         dat['Epoch'].attrs['VAR_TYPE'] = 'support_data'
