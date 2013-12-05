@@ -9,6 +9,7 @@
 
 # standard library includes (alphabetical)
 import datetime
+import fnmatch
 from optparse import OptionParser
 import os
 try:
@@ -50,7 +51,8 @@ def print_inst():
     """
     print the instructions
     """
-    txt = """**Tool to prepare a FIREBIRD data request**
+    txt = """
+    **Tool to prepare a FIREBIRD data request**
     enter some number of requests in this way:
     sc, type, date, duration, priority 
     (e.g. 3, MICRO_BURST, 20130821T00:40:00, 40, 30)
@@ -72,8 +74,13 @@ def print_inst():
     """.format(' '.join(typeDict.keys()))
     print(txt)
 
-def input_loop(datatimes=None):
+def input_loop(datatimes=None, spq=None):
     line = ''
+    # loop over the lines in a sqp adding them with priority 1001 which should put them at the top
+    if spq is not None:
+        with open(sqp, 'r') as fp:
+            # read in the whole file
+            pass
     while True:
         line = raw_input(':::: ')
         if line in ['stop', 'write']:
@@ -195,9 +202,27 @@ def input_loop(datatimes=None):
         request.toFile()
 
 
+def getDataTimes(args):
+    """
+    parse through the args are return the name of the datatimes file or none
+    """
+    for v in args:
+        if v.endswith('-DataTimes_L1.txt'):
+            return v
+    return None
+
+def getSPQ(args):
+    """
+    parse through the args are return the name of the SPQ file or none
+    """
+    for v in args:
+        if fnmatch.fnmatch(v, 'FU_?_SPQ_????????_v??.csv'):
+            return v
+    return None
+    
     
 if __name__ == '__main__':
-    usage = "usage: %prog [options] [Data_Times]"
+    usage = "usage: %prog [options] [Data_Times] [spq_file]"
     parser = OptionParser(usage=usage)
 
     parser.add_option("-f", "--force",
@@ -205,7 +230,7 @@ if __name__ == '__main__':
                   help="Force an overwrite, default=False", default=False)
     (options, args) = parser.parse_args()
 
-    if len(args) > 1:
+    if len(args) > 2:
         parser.error("incorrect number of arguments")
 
 #==============================================================================
@@ -219,23 +244,24 @@ if __name__ == '__main__':
 #        parser.error("Did not understand FU designation: {0}.  [1,2,3,4]".format(fu))
 #    if fu not in [1,2,3,4]:
 #        parser.error("Invalid FU designation: {0}.  [1,2,3,4]".format(fu))
-        
-        
 
-#    outname = args[0]
-    if len(args) != 0:
-        dtfile = args[0]
-        if not os.path.isfile(dtfile):
-            parser.error("Data_Times file: {0} did not exist")
+    dtfile = getDataTimes(args)
+    sqpfile = getSPQ(args)
+    
+    if dtfile is not None:
+        times = parseData_Times(dtfile)
     else:
-        dtfile = None
-            
-    times = parseData_Times(dtfile)
-                
-    make_request()
+        times=None
+
+    if sqpfile is not None:
+        spq = readSPQ(sqpfile)
+    else:
+        spq = None        
+        make_request()
+        
     print_inst()
 
-    input_loop(datatimes=times)
+    input_loop(datatimes=times, spq=spq)
     
 
 
