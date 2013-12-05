@@ -31,15 +31,23 @@ secondsPerPage = 4096*8/19200.*1.4
 
 
 def parseData_Times(fname):
+    """
+    TODO in here if we dont get at least a page of time for a data type is likely missing, so probably don't ask
+
+    TODO if the data times duration is less than 90 minutes then something happened making the data in that sepment suspect
+    """
     if fname is None:
         return None
     with open(fname, 'r') as fp:
         data = fp.readlines()
 
-    data = [v.strip() for v in data if v[0] != '#']
-    data = [v.split(' ') for v in data]
-    data = [ [dup.parse(v[0]).replace(microsecond=0), dup.parse(v[1]).replace(microsecond=0)] for v in data] 
-    return data
+    try:
+        data = [v.strip() for v in data if v[0] != '#']
+        data = [v.split(' ') for v in data]
+        data = [ [dup.parse(v[0]).replace(microsecond=0), dup.parse(v[1]).replace(microsecond=0)] for v in data] 
+        return data
+    except Exception:
+        return None
 
 class Entry(object):
     """
@@ -65,6 +73,8 @@ class Entry(object):
             raise(TypeError('Invalid datetime.datetime object for date'))
         self.date = date
         self.duration = int(duration)
+        if self.duration <= 0:
+            raise(ValueError('Invalid duration: {0}, must be positive'.format(self.duration)))            
         self.priority = int(priority)
         self.JAS = JAS
         self.downlinktime = None # to be filled by a calculation
