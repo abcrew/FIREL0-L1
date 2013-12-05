@@ -57,6 +57,7 @@ if __name__ == '__main__':
     if os.path.isfile(os.path.expanduser(outfile)) and not options.force:
         parser.error("file {0} found and will not overwrite, try --force".format(outfile))
 
+    print('Inputs Valid')
 #==============================================================================
 # deal with the filetype options
 #==============================================================================
@@ -66,6 +67,8 @@ if __name__ == '__main__':
         # could not determine the type, die
         parser.error("Could not determine the file type and flag not given: {0}".format(infile))
 
+    print('Determined input file type to be: {0}'.format(tp))
+    
     if tp == 'configfile':
         d = config.read(infile)
     elif tp == 'mbpfile':
@@ -82,6 +85,5 @@ if __name__ == '__main__':
     if options.force and os.path.isfile(os.path.expanduser(outfile)):
         os.remove(outfile)
     d.write(outfile, hdf5=options.hdf5)
-    print('Wrote {0}'.format(outfile))
 
 
