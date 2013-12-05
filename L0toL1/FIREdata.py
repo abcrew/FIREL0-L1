@@ -1,5 +1,6 @@
 import datetime
 import itertools
+import os
 import time
 
 import numpy as np
@@ -34,8 +35,19 @@ def dat2time(inval):
             return None
     return t0
 
+class data(object):
+    """
+    just a few methods common to all the data type classes below
+    """
+    def write(self, filename, hdf5=False):
+        if hdf5:
+            dm.toHDF5(filename, self.data)
+        else:
+            dm.toJSONheadedASCII(filename, self.data, order=['Epoch'] )
+        print('    Wrote {0}'.format(os.path.abspath(filename)))
+            
 
-class hires(object):
+class hires(data):
     """
     a hi-res data file
     """
@@ -57,8 +69,8 @@ class hires(object):
         dat['Epoch'].attrs['VAR_NOTES'] = 'Epoch at each hi-res measurement'
         dat['hr0'] = dm.dmarray(counts[:,0:6])
         dat['hr0'].attrs['CATDESC'] = 'Detector 0 hi-res'
-        dat['hr0'].attrs['ELEMENT_LABELS'] = ["hr0-0", "hr0-1", "hr0-2", "hr0-3", "hr0-4", "hr0-5"],  
-        dat['hr0'].attrs['ELEMENT_NAMES'] =  ["hr0-0", "hr0-1", "hr0-2", "hr0-3", "hr0-4", "hr0-5"],  
+        dat['hr0'].attrs['ELEMENT_LABELS'] = "hr0-0", "hr0-1", "hr0-2", "hr0-3", "hr0-4", "hr0-5",  
+        dat['hr0'].attrs['ELEMENT_NAMES'] =  "hr0-0", "hr0-1", "hr0-2", "hr0-3", "hr0-4", "hr0-5",  
         dat['hr0'].attrs['FILLVAL'] = -1e-31
         dat['hr0'].attrs['LABLAXIS'] = 'Detector 0 hi-res'
         dat['hr0'].attrs['SCALETYP'] = 'log'
@@ -70,8 +82,8 @@ class hires(object):
         dat['hr0'].attrs['DEPENDNAME_0'] = 'Epoch'
         dat['hr1'] = dm.dmarray(counts[:,6:])
         dat['hr1'].attrs['CATDESC'] = 'Detector 1 hi-res'
-        dat['hr1'].attrs['ELEMENT_LABELS'] = ["hr1-0", "hr1-1", "hr1-2", "hr1-3", "hr1-4", "hr1-5"],  
-        dat['hr1'].attrs['ELEMENT_NAMES'] =  ["hr1-0", "hr1-1", "hr1-2", "hr1-3", "hr1-4", "hr1-5"],  
+        dat['hr1'].attrs['ELEMENT_LABELS'] = "hr1-0", "hr1-1", "hr1-2", "hr1-3", "hr1-4", "hr1-5",  
+        dat['hr1'].attrs['ELEMENT_NAMES'] =  "hr1-0", "hr1-1", "hr1-2", "hr1-3", "hr1-4", "hr1-5",  
         dat['hr1'].attrs['FILLVAL'] = -1e-31
         dat['hr1'].attrs['LABLAXIS'] = 'Detector 1 hi-res'
         dat['hr1'].attrs['SCALETYP'] = 'log'
@@ -83,16 +95,12 @@ class hires(object):
         dat['hr1'].attrs['DEPENDNAME_0'] = 'Epoch'
         self.data = dat
 
-    def write(self, filename, hdf5=False):
-        if hdf5:
-            dm.toHDF5(filename, self.data)
-        else:
-            dm.toJSONheadedASCII(filename, self.data)
-
     @classmethod
     def read(self, filename):
         b = packet.BIRDpackets(filename)
+        print('    Read {0} packets'.format(len(b)))
         pages = page.fromPackets(b)
+        print('    Read {0} pages'.format(len(pages)))
         h = []
         for p in pages:
             h.extend(hiresPage(p))
@@ -260,7 +268,7 @@ class configPage(list):
 
 
 
-class config(object):
+class config(data):
     """
     a config data file
     """
@@ -476,16 +484,12 @@ class config(object):
 
         self.data = dat
 
-    def write(self, filename, hdf5=False):
-        if hdf5:
-            dm.toHDF5(filename, self.data)
-        else:
-            dm.toJSONheadedASCII(filename, self.data)
-
     @classmethod
     def read(self, filename):
         b = packet.BIRDpackets(filename)
+        print('    Read {0} packets'.format(len(b)))
         pages = page.fromPackets(b)
+        print('    Read {0} pages'.format(len(pages)))
         h = []
         for p in pages:
             h.extend(configPage(p))
@@ -537,7 +541,7 @@ class datatimesPage(list):
         self.append([dt, d1])
 
 
-class datatimes(object):
+class datatimes(data):
     """
     a datatimes data file
     """
@@ -572,18 +576,27 @@ class datatimes(object):
         dat['Epoch'].attrs['MONOTON'] = 'INCREASE'
         dat['Epoch'].attrs['VAR_NOTES'] = 'Epoch at each configuration point'
 
+        dat['Mode'] = dm.dmarray(np.zeros(len(dt), dtype=int))
+        dat['Mode'][...] = -1
+        dat['Mode'].attrs['FIELDNAM'] = 'Mode'
+        dat['Mode'].attrs['FILLVAL'] = -1
+        dat['Mode'].attrs['LABLAXIS'] = 'FIRE Mode'
+        dat['Mode'].attrs['SCALETYP'] = 'linear'
+        dat['Mode'].attrs['VALIDMIN'] = 0
+        dat['Mode'].attrs['VALIDMAX'] = 1
+        dat['Mode'].attrs['VAR_TYPE'] = 'support_data'
+        dat['Mode'].attrs['VAR_NOTES'] = 'Is the line FIRE on (=1) or FIRE off (=0)'
+        dat['Mode'][::2] = 1
+        dat['Mode'][1::2] = 0
+        
         self.data = dat
-
-    def write(self, filename, hdf5=False):
-        if hdf5:
-            dm.toHDF5(filename, self.data)
-        else:
-            dm.toJSONheadedASCII(filename, self.data)
 
     @classmethod
     def read(self, filename):
         b = packet.BIRDpackets(filename)
+        print('    Read {0} packets'.format(len(b)))
         pages = page.fromPackets(b)
+        print('    Read {0} pages'.format(len(pages)))
         h = []
         for p in pages:
             h.extend(datatimesPage(p))
@@ -666,7 +679,7 @@ class burstPage(list):
             self.append( (v1, v2) )
 
 
-class burst(object):
+class burst(data):
     """
     a datatimes data file
     """
@@ -704,16 +717,12 @@ class burst(object):
 
         self.data = dat
 
-    def write(self, filename, hdf5=False):
-        if hdf5:
-            dm.toHDF5(filename, self.data)
-        else:
-            dm.toJSONheadedASCII(filename, self.data, order=['Epoch'] )
-
     @classmethod
     def read(self, filename):
         b = packet.BIRDpackets(filename)
+        print('    Read {0} packets'.format(len(b)))
         pages = page.fromPackets(b)
+        print('    Read {0} pages'.format(len(pages)))
         h = []
         for p in pages:
             h.extend(burstPage(p))
@@ -774,7 +783,7 @@ class contextPage(list):
         self.append( (dt, dout) )
 
 
-class context(object):
+class context(data):
     """
     a context data file
     """
@@ -813,16 +822,12 @@ class context(object):
 
         self.data = dat
 
-    def write(self, filename, hdf5=False):
-        if hdf5:
-            dm.toHDF5(filename, self.data)
-        else:
-            dm.toJSONheadedASCII(filename, self.data, order=['Epoch'] )
-
     @classmethod
     def read(self, filename):
         b = packet.BIRDpackets(filename)
+        print('    Read {0} packets'.format(len(b)))   
         pages = page.fromPackets(b)
+        print('    Read {0} pages'.format(len(pages)))
         h = []
         for p in pages:
             h.extend(contextPage(p))
