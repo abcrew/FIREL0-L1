@@ -31,6 +31,42 @@ secondsPerPage = 4096*8/19200.*1.4
 # 8 to bits to bytes
 # 19200 is the baud rate
 
+def getSCname(fname):
+    """
+    parse the filename to get the FU
+    """
+    if os.path.basename(fname).startswith('FU_'):
+        return int(os.path.basename(fname)[3])
+    else:
+        raise(ValueErrror('Bad SPQ filename: {0}'.format(os.path.basename(fname))))
+
+
+def readSPQ(fname):
+    """
+    read in a SQP file and convert it to Entry objects in a Request
+    """
+    with open(fname, 'r') as fp:
+        dat = fp.readlines()
+    dat = [v.strip() for v in dat if v[0] != '#']
+
+    request = Request(date=datetime.datetime.utcnow().date())
+
+    scname = getSCname(fname)
+    for v in dat:
+        if not v:
+            continue
+        v2 = v.split()
+        # CONFIG, 2013, 12, 5, 0, 0, 0, 271, NONE
+        date = datetime.datetime(int(v2[1].replace(',', '')), #Y
+                                 int(v2[2].replace(',', '')), #M
+                                 int(v2[3].replace(',', '')), #D
+                                 int(v2[4].replace(',', '')), #h
+                                 int(v2[5].replace(',', '')), #m
+                                 int(v2[6].replace(',', '')))  #s
+        entry = Entry(scname, v2[0].replace(',', ''), date, int(v2[7].replace(',', '')), 100) # priority is 100
+        request.addEntry(entry)
+    return request
+
 
 def parseData_Times(fname):
     """

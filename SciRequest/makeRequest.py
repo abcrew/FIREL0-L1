@@ -25,26 +25,30 @@ from Request import Request
 from Request import typeDict
 from Request import parseData_Times
 from Request import FIREOffException
-
+from Request import readSPQ
 
 warnings.simplefilter('always')
 
-request = None
 
 def make_request():
-    global request
-    print('Enter request date or enter for today (YYYYMMDD)')
-    line = raw_input(': ')
-    if not line:
-        rdate = datetime.datetime.utcnow().date()
-    else:
-        try:
-            rdate = datetime.datetime.strptime(line, '%Y%m%d').date()
-        except ValueError:
-            print('  ** Bad time format')
-            make_request()
-            return
+    # just use todays date for this don't ask
+    rdate = rdate = datetime.datetime.utcnow().date()
     request = Request(date=rdate)
+    return
+    
+#    global request
+#    print('Enter request date or enter for today (YYYYMMDD)')
+#    line = raw_input(': ')
+#    if not line:
+#        rdate = datetime.datetime.utcnow().date()
+#    else:
+#        try:
+#            rdate = datetime.datetime.strptime(line, '%Y%m%d').date()
+#        except ValueError:
+#            print('  ** Bad time format')
+#            make_request()
+#            return
+#    request = Request(date=rdate)
 
     
 def print_inst():
@@ -75,12 +79,11 @@ def print_inst():
     print(txt)
 
 def input_loop(datatimes=None, spq=None):
+    global request
     line = ''
     # loop over the lines in a sqp adding them with priority 1001 which should put them at the top
     if spq is not None:
-        with open(sqp, 'r') as fp:
-            # read in the whole file
-            pass
+        request = spq
     while True:
         line = raw_input(':::: ')
         if line in ['stop', 'write']:
@@ -222,6 +225,7 @@ def getSPQ(args):
     
     
 if __name__ == '__main__':
+    request = None
     usage = "usage: %prog [options] [Data_Times] [spq_file]"
     parser = OptionParser(usage=usage)
 
@@ -256,7 +260,8 @@ if __name__ == '__main__':
     if sqpfile is not None:
         spq = readSPQ(sqpfile)
     else:
-        spq = None        
+        spq = None
+        request = None
         make_request()
         
     print_inst()
