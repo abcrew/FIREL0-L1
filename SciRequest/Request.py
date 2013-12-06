@@ -11,6 +11,8 @@ import os
 import warnings
 
 import dateutil.parser as dup
+import numpy as np
+from spacepy import datamodel as dm
 
 class FIREOffException(Exception):
     pass
@@ -38,17 +40,17 @@ def parseData_Times(fname):
     """
     if fname is None:
         return None
-    with open(fname, 'r') as fp:
-        data = fp.readlines()
+    data = dm.readJSONheadedASCII(fname, convert={'Epoch':lambda x: dup.parse(x, ignoretz=True),
+                                                  'Time':lambda x: dup.parse(x, ignoretz=True)})
+    t1 = np.asarray([v.replace(microsecond=0) for v in data['Epoch']])
+    t2 = np.asarray([v.replace(microsecond=0) for v in data['Time']])
 
-    try:
-        data = [v.strip() for v in data if v[0] != '#']
-        data = [v.split(' ') for v in data]
-        data = [ [dup.parse(v[0]).replace(microsecond=0), dup.parse(v[1]).replace(microsecond=0)] for v in data] 
-        return data
-    except Exception:
-        return None
+    outdat = dm.SpaceData()
+    outdat['On']  = np.asarray( [t1[data['Mode'].astype(np.bool)],  t2[data['Mode'].astype(np.bool)]]).T
+    outdat['Off'] = np.asarray( [t1[~data['Mode'].astype(np.bool)], t2[~data['Mode'].astype(np.bool)]]).T
+    return outdat
 
+    
 class Entry(object):
     """
     class to hold a single entry in a Request
@@ -96,8 +98,8 @@ class Entry(object):
         The first line always represents an on
         The file is always sorted by the sc
         """
-        ontimes  = self.datatimes[::2]
-        offtimes = self.datatimes[1::2]
+        ontimes  = self.datatimes['On']
+        offtimes = self.datatimes['Off']
         # is the request date inside an on time?
         df_on = []
         for i, (v_on, v_off) in enumerate(ontimes):

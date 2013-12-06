@@ -207,7 +207,7 @@ def getDataTimes(args):
     parse through the args are return the name of the datatimes file or none
     """
     for v in args:
-        if v.endswith('-DataTimes_L1.txt'):
+        if '-DataTimes_L1' in v:
             return v
     return None
 
@@ -260,7 +260,6 @@ if __name__ == '__main__':
         make_request()
         
     print_inst()
-
     input_loop(datatimes=times, spq=spq)
     
 

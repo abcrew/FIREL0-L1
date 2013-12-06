@@ -8,6 +8,7 @@ Converter form the FIRE L0 packets to L1 data
 """
 
 # standard library includes (alphabetical)
+import copy
 from optparse import OptionParser
 import os
 
@@ -85,5 +86,22 @@ if __name__ == '__main__':
     if options.force and os.path.isfile(os.path.expanduser(outfile)):
         os.remove(outfile)
     d.write(outfile, hdf5=options.hdf5)
+
+    """
+    write out a good and suspect data times
+    """
+    if tp == 'datatimes':
+        d_bak = copy.deepcopy(d)
+        # grab only the good data times (this means duration is at least 90 minutes)
+        ind = (d.data['Duration'] > 5400) & (d.data['Duration'] < 6200)    # 90 minutes
+        for k in d.data:
+            d.data[k] = d.data[k][ind]
+        d.write(outfile.replace('.txt', '_good.txt'), hdf5=options.hdf5)
+        d = d_bak
+        ind = ~ind
+        for k in d.data:
+            d.data[k] = d.data[k][ind]
+        d.write(outfile.replace('.txt', '_bad.txt'), hdf5=options.hdf5)
+            
 
 

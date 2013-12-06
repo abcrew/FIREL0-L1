@@ -550,18 +550,18 @@ class datatimes(data):
         data = np.hstack(zip(*inlst)[1]).reshape((-1, 1))
         dat = dm.SpaceData()
 
-        dat['time'] = dm.dmarray(data[:,0])
-        dat['time'].attrs['CATDESC'] = 'Start or stop time'
-        dat['time'].attrs['FIELDNAM'] = 'time'
-        dat['time'].attrs['LABLAXIS'] = 'Start or stop time'
-        dat['time'].attrs['SCALETYP'] = 'linear'
-        #dat['time'].attrs['UNITS'] = 'none'
-        dat['time'].attrs['VALIDMIN'] = datetime.datetime(1990,1,1)
-        dat['time'].attrs['VALIDMAX'] = datetime.datetime(2029,12,31,23,59,59,999000)
-        dat['time'].attrs['VAR_TYPE'] = 'support_data'
-        dat['time'].attrs['VAR_NOTES'] = 'Time data started or stopped'
-        dat['time'].attrs['DEPEND_0'] = 'Epoch'
-        dat['time'].attrs['FILLVAL'] = 'None'
+        dat['Time'] = dm.dmarray(data[:,0])
+        dat['Time'].attrs['CATDESC'] = 'Start or stop Time'
+        dat['Time'].attrs['FIELDNAM'] = 'Time'
+        dat['Time'].attrs['LABLAXIS'] = 'Start or stop Time'
+        dat['Time'].attrs['SCALETYP'] = 'linear'
+        #dat['Time'].attrs['UNITS'] = 'none'
+        dat['Time'].attrs['VALIDMIN'] = datetime.datetime(1990,1,1)
+        dat['Time'].attrs['VALIDMAX'] = datetime.datetime(2029,12,31,23,59,59,999000)
+        dat['Time'].attrs['VAR_TYPE'] = 'support_data'
+        dat['Time'].attrs['VAR_NOTES'] = 'Time data started or stopped'
+        dat['Time'].attrs['DEPEND_0'] = 'Epoch'
+        dat['Time'].attrs['FILLVAL'] = 'None'
 
         dat['Epoch'] = dm.dmarray(dt)
         dat['Epoch'].attrs['CATDESC'] = 'Default Time'
@@ -588,6 +588,19 @@ class datatimes(data):
         dat['Mode'].attrs['VAR_NOTES'] = 'Is the line FIRE on (=1) or FIRE off (=0)'
         dat['Mode'][::2] = 1
         dat['Mode'][1::2] = 0
+
+        dat['Duration'] = dm.dmarray(np.zeros(len(dt), dtype=int))
+        dat['Duration'][...] = -1
+        dat['Duration'].attrs['FIELDNAM'] = 'Duration'
+        dat['Duration'].attrs['FILLVAL'] = -1
+        dat['Duration'].attrs['LABLAXIS'] = 'FIRE Duration'
+        dat['Duration'].attrs['SCALETYP'] = 'linear'
+        dat['Duration'].attrs['VALIDMIN'] = 0
+        dat['Duration'].attrs['VALIDMAX'] = 100000
+        dat['Duration'].attrs['VAR_TYPE'] = 'support_data'
+        dat['Duration'].attrs['VAR_NOTES'] = 'Duration of the on or off'
+        df = np.asarray([ v1 - v2 for v1, v2 in zip(dat['Time'],dat['Epoch']) ])
+        dat['Duration'][...] = np.asarray([ v.days*24*60*60 + v.seconds for v in df ])
         
         self.data = dat
 
