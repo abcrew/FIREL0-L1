@@ -15,16 +15,16 @@ class BIRDpacket(object):
         self.grt = datetime.datetime(dt.year, dt.month, dt.day, int(hour),
                                int(minute), int(second), int(millisecond)*100)
         self.raw = strin.split(' - ')[1]
-        self.srcid = self.raw.split(' ')[1:3]
-        self.destid = self.raw.split(' ')[3:5]
-        self.cmd_tlm = self.raw.split(' ')[5]
-        self.funid = self.raw.split(' ')[6]
-        self.seqnum =  self.raw.split(' ')[7]
-        self.seqidx =  self.raw.split(' ')[8]
-        self.pktnum =  self.raw.split(' ')[9]
-        self.datalen = self.raw.split(' ')[10]
-        self.data = self.raw.split(' ')[11:11+int(self.datalen,16)]
-        self.crc = self.raw.split(' ')[11+int(self.datalen, 16):11+int(self.datalen, 16)+2]
+        self.srcid = self.raw.split()[1:3]
+        self.destid = self.raw.split()[3:5]
+        self.cmd_tlm = self.raw.split()[5]
+        self.funid = self.raw.split()[6]
+        self.seqnum =  self.raw.split()[7] # number of pages in request
+        self.seqidx =  self.raw.split()[8] # counts up to self.seqnum 
+        self.pktnum =  self.raw.split()[9] # packet within page, goes up to 0x13 for each page (last could end early)
+        self.datalen = self.raw.split()[10] # can be sorted for the last packet in a page
+        self.data = self.raw.split()[11:11+int(self.datalen,16)]
+        self.crc = self.raw.split()[11+int(self.datalen, 16):11+int(self.datalen, 16)+2]
         self.valid_crc = self._crc_valid()
 
     def __eq__(self, other):
