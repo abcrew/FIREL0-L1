@@ -116,10 +116,7 @@ class datatimes(FIREdata.data):
 
     @classmethod
     def read(self, filename):
-        b = packet.BIRDpackets(filename)
-        print('    Read {0} packets'.format(len(b)))
-        pages = page.fromPackets(b)
-        print('    Read {0} pages'.format(len(pages)))
+        pages = super(datatimes, self).read(filename)
         h = []
         for p in pages:
             h.extend(datatimesPage(p))

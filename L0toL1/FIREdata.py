@@ -8,7 +8,7 @@ import numpy as np
 from spacepy import datamodel as dm
 
 import packet
-
+import page
 
 def dat2time(inval):
     """
@@ -52,7 +52,11 @@ class data(object):
     @abc.abstractmethod
     def read(self, filename):
         """read in the data from the file"""
-        pass
+        b = packet.BIRDpackets(filename)
+        print('    Read {0} packets'.format(len(b)))
+        pages = page.page.fromPackets(b)
+        print('    Read {0} pages'.format(len(pages)))
+        return pages
             
 class dataPage(list):
     __metaclass__ = abc.ABCMeta
