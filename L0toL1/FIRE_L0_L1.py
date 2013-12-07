@@ -15,11 +15,11 @@ import os
 # dependency includes (alphabetical)
 
 
-from FIREdata import burst
-from FIREdata import config
-from FIREdata import context
-from FIREdata import datatimes
-from FIREdata import hires
+from burst import burst
+from config import config
+from context import context
+from datatimes import datatimes
+from hires import hires
 from FIREutils import determineFileType
 
 

@@ -5,6 +5,7 @@ import os
 
 from CCITT_CRC16 import CRCfromString
 
+
 class BIRDpacket(object):
     def __init__(self, strin, filename):
         """
@@ -64,6 +65,7 @@ class BIRDpackets(list):
             dat = fp.readlines()
         dat = [v.strip() for v in dat]
         self.filename = infile
+        # make this class a list of BIRDpacket objects
         self.extend([BIRDpacket(v, self.filename) for v in dat])
             
     def __str__(self):
