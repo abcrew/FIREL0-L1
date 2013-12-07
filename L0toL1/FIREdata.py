@@ -37,6 +37,7 @@ def dat2time(inval):
     return t0
 
 class data(object):
+    __metaclass__ = abc.ABCMeta
     """
     just a few methods common to all the data type classes below
     """
@@ -46,6 +47,12 @@ class data(object):
         else:
             dm.toJSONheadedASCII(filename, self.data, order=['Epoch'] )
         print('    Wrote {0}'.format(os.path.abspath(filename)))
+
+    @classmethod
+    @abc.abstractmethod
+    def read(self, filename):
+        """read in the data from the file"""
+        pass
             
 class dataPage(list):
     __metaclass__ = abc.ABCMeta
