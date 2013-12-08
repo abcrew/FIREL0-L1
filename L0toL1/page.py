@@ -16,7 +16,7 @@ class page(str):
         _pktnum = [p.pktnum for p in packets]
         _grtval = [p.grt for p in packets]
         """
-        need tp look at _pktnum to look for missing packets in the page
+        need to look at _pktnum to look for missing packets in the page
         For example I have packet 1,2,4,5,6,7,8,9,a,b,c,d,e,f,10,11,12,13 (one page)
         (3 is missing)
         when pktnum skips a number between 1 and 13 hex inset a None into the page data
@@ -24,26 +24,60 @@ class page(str):
         is truncated (maybe recoverable) and then a sliding windew is needed asfter the
         None to get back on track with valid data.
         """
-        # how many pages are in the file?
-        # count through the seqidx and see if it repeats
-        npages = 0
         pages = []
-        pg = ''
-        for ii, (sn, si, pn) in enumerate(itertools.izip( _seqnum, _seqidx, _pktnum)):
-            """
-            this need rework because it depends on getting packet 01 of the page
-            look at each (sn, si, pn) to identify the start of a new page
+        outval = []
+        pn = packets[0].pktnum
+        # the first packet in a L0 file is a new page
+        #   if a page is downlinked across the day boundry maybe not
+        #   but we will ignore that for now
+        n_packets = 0
+        n_pages = 0
+        for ii, (p, si, pn) in enumerate(itertools.izip(packets, _seqidx, _pktnum)):
+            if ii == 0:
+                # this is the first on a file, put it into a page
+                outval.extend(p.data)
+                # and update the current seqindex and paketnumber
+                si1 = si
+                pn1 = pn
+            elif si == si1 and pn > pn1:
+                # add in None for each missing paketnumber
+                #   Note that [None]*0 is an empty list
+                nNone = (int(pn, 16)-int(pn1, 16)-1)
+                outval.extend([None]*nNone)
+                if nNone:
+                    print("Found a missing packet before, GRT:{3} num:{0}:{1}:{2}".format(p.seqnum,
+                                                                                          p.seqidx,
+                                                                                          p.pktnum,
+                                                                                          p.grt.isoformat()))
 
-            this all then needs to return a list of page class objects
-            """
-            if pn == '01' and pg: # start of a new page
-                pages.append(pg)
-                pg = ''
-            elif pn == '01':
-                pg = ''
-            if pg:
-                pg += ' '
-            pg += ' '.join(packets[ii].data)
-        pages.append(pg)
-        return [page(p) for p in pages]
+                # now add the data from this packet into the working page
+                outval.extend(p.data) # put this into page
+                # and update the current seqindex and paketnumber
+                si1 = si
+                pn1 = pn
+            elif (si == si1 and pn < pn1) or si != si1:
+                # this means we asked for two 1-page downlinks in a row
+                # so then we are done with the previous page
+                pages.append(outval)
+                outval = []
+                nNone = (int(pn, 16)-1)
+                outval.extend([None]*nNone)
+                if nNone:
+                    print("Found a missing packet before, GRT:{3} num:{0}:{1}:{2}".format(p.seqnum,
+                                                                                          p.seqidx,
+                                                                                          p.pktnum,
+                                                                                          p.grt.isoformat()))
+                # now add the data from this packet into the working page
+                outval.extend(p.data) # put this into page
+                # and update the current seqindex and paketnumber
+                si1 = si
+                pn1 = pn
+            else:
+                raise(RuntimeError("Should not have gotten here, page"))
+
+        if outval:
+            pages.append(outval)
+        # return a list of data values with None separating
+        #   each of the packets
+        return pages
 

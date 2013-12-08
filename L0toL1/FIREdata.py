@@ -10,31 +10,64 @@ from spacepy import datamodel as dm
 import packet
 import page
 
+def hex2int(inpage):
+    """
+    convert a page of ascii hex data to integrers and None as needed
+    """
+    dat = []
+    for v in inpage:
+        try:
+            dat.append(int(v, 16))
+        except TypeError:
+            dat.append(None)
+    return dat
+
 def dat2time(inval):
     """
     take 8 bytes and change them to a datetime
     """
-    if isinstance(inval, str) and len(inval) > 2:
-        t0tmp = inval.split()
-        t1tmp = [int(v, 16) for v in t0tmp[0:6]]
-        t1tmp.append(int(t0tmp[6]+t0tmp[7], 16))
-        t0 = datetime.datetime(2000 + t1tmp[0], t1tmp[1], t1tmp[2],
-                               t1tmp[3], t1tmp[4], t1tmp[5], 1000*t1tmp[6])
-    else:
-        try:
-            t1tmp = [int(v, 16) for v in inval[0:6]]
-        except TypeError:
-            t1tmp = inval[0:6]
-        try:
-            t1tmp.append(int(inval[6]+inval[7], 16))
-        except TypeError:
-            t1tmp.append(2**8*inval[6] + inval[7])
-        try:
-            t0 = datetime.datetime(2000 + t1tmp[0], t1tmp[1], t1tmp[2],
-                                   t1tmp[3], t1tmp[4], t1tmp[5], 1000*t1tmp[6])
-        except ValueError:
-            return None
+    t0 = datetime.datetime(2000 + inval[0], inval[1], inval[2],
+                           inval[3], inval[4], inval[5], 1000*inval[6])
     return t0
+
+def validDate(inval, mindate=datetime.datetime(2013, 12, 1), maxdate=datetime.datetime(2015, 12, 31)):
+    """
+    go through input data and if it makes a date in the given rage it is valid, otherwise it is not
+    """
+    try:
+        inval = [int(v, 16) for v in inval]
+    except TypeError:
+        return False
+    try:
+        date = dat2time(inval)
+        if date >= mindate and date <= maxdate:
+            return True
+        else:
+            return False
+    except (ValueError, TypeError):
+        return False
+
+    ## if isinstance(inval, str) and len(inval) > 2:
+    ##     t0tmp = inval.split()
+    ##     t1tmp = [int(v, 16) for v in t0tmp[0:6]]
+    ##     t1tmp.append(int(t0tmp[6]+t0tmp[7], 16))
+    ##     t0 = datetime.datetime(2000 + t1tmp[0], t1tmp[1], t1tmp[2],
+    ##                            t1tmp[3], t1tmp[4], t1tmp[5], 1000*t1tmp[6])
+    ## else:
+    ##     try:
+    ##         t1tmp = [int(v, 16) for v in inval[0:6]]
+    ##     except TypeError:
+    ##         t1tmp = inval[0:6]
+    ##     try:
+    ##         t1tmp.append(int(inval[6]+inval[7], 16))
+    ##     except TypeError:
+    ##         t1tmp.append(2**8*inval[6] + inval[7])
+    ##     try:
+    ##         t0 = datetime.datetime(2000 + t1tmp[0], t1tmp[1], t1tmp[2],
+    ##                                t1tmp[3], t1tmp[4], t1tmp[5], 1000*t1tmp[6])
+    ##     except ValueError:
+    ##         return None
+    ## return t0
 
 class data(object):
     __metaclass__ = abc.ABCMeta
