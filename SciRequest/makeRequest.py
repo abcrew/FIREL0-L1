@@ -84,6 +84,8 @@ def input_loop(datatimes=None, spq=None):
     # loop over the lines in a sqp adding them with priority 1001 which should put them at the top
     if spq is not None:
         request = spq
+    else:
+        request = Request()
     while True:
         line = raw_input(':::: ')
         if line in ['stop', 'write']:
@@ -111,7 +113,10 @@ def input_loop(datatimes=None, spq=None):
                 continue
             elif line[1].upper().startswith('CONFIG'):
                 tmp = line[1].split(':')
-                date =  datetime.datetime.strptime(tmp[1], '%Y%m%d')
+                try:
+                    date =  datetime.datetime.strptime(tmp[1], '%Y%m%d')
+                except ValueError:
+                    continue
                 date2 = date
                 while date2.day == date.day: 
                     try:
@@ -125,7 +130,10 @@ def input_loop(datatimes=None, spq=None):
                 continue
             elif line[1].upper().startswith('CONTEXT'):
                 tmp = line[1].split(':')
-                date =  datetime.datetime.strptime(tmp[1], '%Y%m%d')
+                try:
+                    date =  datetime.datetime.strptime(tmp[1], '%Y%m%d')
+                except ValueError:
+                    continue
                 date2 = date
                 while date2.day == date.day: 
                     try:
@@ -139,7 +147,10 @@ def input_loop(datatimes=None, spq=None):
                 continue               
             elif line[1].upper().startswith('MICRO_BURST'):
                 tmp = line[1].split(':')
-                date =  datetime.datetime.strptime(tmp[1], '%Y%m%dT%H')
+                try:
+                    date =  datetime.datetime.strptime(tmp[1], '%Y%m%dT%H')
+                except ValueError:
+                    continue
                 date2 = date
                 while date2.day == date.day: 
                     try:
