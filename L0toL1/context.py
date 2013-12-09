@@ -28,7 +28,6 @@ class contextPage(FIREdata.dataPage):
     a page of context data
     """
     def __init__(self, inpage):
-        self.valid = False
         len1 = datalen+majorTimelen
         len2 = datalen+minorTimelen
         dat = FIREdata.hex2int(inpage)
@@ -39,15 +38,12 @@ class contextPage(FIREdata.dataPage):
         self.major_data(dat[0:datalen+majorTimelen])
         start = datalen+majorTimelen
         # the index of the start of each FIRE data
-        for ii in range(start, len(dat), datalen+majorTimelen): 
+        for ii in range(start, len(dat), datalen+minorTimelen): 
             stop = ii+datalen+majorTimelen
             try:
-                self.major_data(dat[ii:stop])
+                self.minor_data(dat[ii:stop])
             except IndexError: # malformed data for some reason, skip it
                 print("Skipping malformed context: {0}".format(dat[ii:stop]))
-                pass
-        # drop entries that start with None
-        self = [v for v in self if v[0] is not None]
         # sort the data
         self = sorted(self, key = lambda x: x[0])
 
@@ -65,6 +61,7 @@ class contextPage(FIREdata.dataPage):
         dout = [d2, d3]
         self.append( (dt, dout) )
 
+    minor_data = major_data
 
 class context(FIREdata.data):
     """
@@ -80,7 +77,7 @@ class context(FIREdata.data):
             try:
                 tmp[i,j] = val
             except (TypeError, ValueError):
-                tmp[i,j] = -100
+                tmp[i,j] = -2**16-1
 
         
         dat = dm.SpaceData()
@@ -97,7 +94,7 @@ class context(FIREdata.data):
         dat['Context'].attrs['VAR_TYPE'] = 'data'
         dat['Context'].attrs['VAR_NOTES'] = 'Context data 6s average'
         dat['Context'].attrs['DEPEND_0'] = 'Epoch'
-        dat['Context'].attrs['FILLVAL'] = 2**16-1
+        dat['Context'].attrs['FILLVAL'] = -2**16-1
 
         dat['Epoch'] = dm.dmarray(dt)
         dat['Epoch'].attrs['CATDESC'] = 'Default Time'
