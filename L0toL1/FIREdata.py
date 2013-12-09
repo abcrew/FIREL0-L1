@@ -27,7 +27,8 @@ def dat2time(inval):
     take 8 bytes and change them to a datetime
     """
     t0 = datetime.datetime(2000 + inval[0], inval[1], inval[2],
-                           inval[3], inval[4], inval[5], 1000*inval[6])
+                           inval[3], inval[4], inval[5],
+                           1000*(inval[6]*(2**8) + inval[7]))
     return t0
 
 def validDate(inval, mindate=datetime.datetime(2013, 12, 1), maxdate=datetime.datetime(2015, 12, 31)):
