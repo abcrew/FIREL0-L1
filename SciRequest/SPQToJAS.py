@@ -13,8 +13,9 @@ from optparse import OptionParser
 import os
 
 
-# JAS format:
+# SPQ format:
 #  HIRES, 2013, 12, 6, 14, 31, 0, 60, FU_2_JAS_0043_20131209_0716.jpp
+#  HIRES, 2013, 12, 6, 14, 31, 0, 60, None
 
 
 # this is type, then seconds of data per block
@@ -136,5 +137,10 @@ if __name__ == '__main__':
     
     if os.path.isfile(options.outfile):
         os.remove(options.outfile)
+
+    """
+    add JAS stuff here
+    """
+        
     spq.toFile(options.outfile)
 
