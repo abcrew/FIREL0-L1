@@ -25,14 +25,13 @@ class datatimesPage(FIREdata.dataPage):
     def __init__(self, inpage):
         self._datalen = 8
         self._majorTimelen = 8
-        dat = inpage.split(' ')
-        dat = [int(v, 16) for v in dat]
+        dat = FIREdata.hex2int(inpage)
 
-        self.t0 = FIREdata.dat2time(inpage[0:25])
+        self.t0 = FIREdata.dat2time(dat[0:8])
 
         # now the data length is 8
         for ii in range(0, len(dat), self._datalen): # the index of the start of each FIRE data
-            stop = ii+self._datalen+self._majorTimelen  # 24 bytes of data and 2 for a minor time stamp
+            stop = ii+self._datalen+self._majorTimelen  
             self.major_data(dat[ii:stop])
         # cull any bad data
         ## this has None in place of data
@@ -44,10 +43,16 @@ class datatimesPage(FIREdata.dataPage):
         """
         read in and add major data to the class
         """
-        if (np.asarray(inval) == 0).all(): # is this line fill?
+        if not any(inval): # is this line fill?
             return
-        dt = FIREdata.dat2time(inval[0:8])
-        d1 = FIREdata.dat2time(inval[ self._majorTimelen:])
+        try:
+            dt = FIREdata.dat2time(inval[0:8])
+        except ValueError:
+            return
+        try:
+            d1 = FIREdata.dat2time(inval[ self._majorTimelen:])
+        except ValueError:
+            return
         self.append([dt, d1])
 
 
