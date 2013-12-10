@@ -74,8 +74,8 @@ WHILE ((NOT done) AND (Request_Index < Request_Index_Max))
     /* */
     
     /* write response to AWE and operator log */
-    SEND_AWE(AWE.Event_1, "%s %s %d, %d, %d, %d, %d, %d, %d", response, Data_Type_List[Request_Index], Request_Time_Duration_List[Request_Index][0], Request_Time_Duration_List[Request_Index][1], Request_Time_Duration_List[Request_Index][2], Request_Time_Duration_List[Request_Index][3], Request_Time_Duration_List[Request_Index][4], Request_Time_Duration_List[Request_Index][5], Request_Time_Duration_List[Request_Index][6])
-    FILE_WRITE(operatorLogFileName, "%s, %s, %s, %d, %d, %d, %d, %d, %d, %d", TOSTRING(NOW()), response, Data_Type_List[Request_Index], Request_Time_Duration_List[Request_Index][0], Request_Time_Duration_List[Request_Index][1], Request_Time_Duration_List[Request_Index][2], Request_Time_Duration_List[Request_Index][3], Request_Time_Duration_List[Request_Index][4], Request_Time_Duration_List[Request_Index][5], Request_Time_Duration_List[Request_Index][6])
+    SEND_AWE(AWE.Event_1, "%s %s %d-%d-%d %d:%d:%d, %d", response, Data_Type_List[Request_Index], 2000+Request_Time_Duration_List[Request_Index][0], Request_Time_Duration_List[Request_Index][1], Request_Time_Duration_List[Request_Index][2], Request_Time_Duration_List[Request_Index][3], Request_Time_Duration_List[Request_Index][4], Request_Time_Duration_List[Request_Index][5], Request_Time_Duration_List[Request_Index][6])
+    FILE_WRITE(operatorLogFileName, "%s %s %s %d, %d, %d, %d, %d, %d, %d", TOSTRING(NOW()), response, Data_Type_List[Request_Index], Request_Time_Duration_List[Request_Index][0], Request_Time_Duration_List[Request_Index][1], Request_Time_Duration_List[Request_Index][2], Request_Time_Duration_List[Request_Index][3], Request_Time_Duration_List[Request_Index][4], Request_Time_Duration_List[Request_Index][5], Request_Time_Duration_List[Request_Index][6])
     /* */
     
     /* what do we want to do? */
@@ -137,7 +137,7 @@ def NoneToStr(inval):
         return 'NONE'
     else:
         return inval
-		
+        
 def NoneToZero(inval):
     if inval == '':
         return "0"
@@ -169,7 +169,7 @@ class SPQline(object):
                                         int(self.hour), int(self.minute), int(self.second))
         else:
             self.dt = None
-			
+            
         self.idx = None
             
     def __str__(self):
@@ -220,16 +220,16 @@ class SPQfile(list):
             num_requests= len(self), 
             flight_unit_num=self.FU_Num_From_SPQ())
         for i,f in enumerate(self):
-		    f.idx = i
-		    if f.data_type == "DATA_TIMES":
-			    f.year = "0"
-			    f.month = "0"
-			    f.day = "0"
-			    f.hour = "0"
-			    f.minute = "0"
-			    f.second = "0"
-			    f.duration = "0"
-		    outValue += f.toJAS()
+            f.idx = i
+            if f.data_type == "DATA_TIMES":
+                f.year = "0"
+                f.month = "0"
+                f.day = "0"
+                f.hour = "0"
+                f.minute = "0"
+                f.second = "0"
+                f.duration = "0"
+            outValue += f.toJAS()
         outValue += body
         outValue += footer
         
@@ -284,7 +284,7 @@ if __name__ == '__main__':
         raise(RuntimeError("Outfile: {0} exists and will not overwrite, try --force".format(options.outfile)))
 
     spq = parseFile(args[0])
-    spq.file_name = options.outfile.replace(".processed", "")
+    spq.file_name = os.path.basename(options.outfile.replace(".processed", ""))
     
     
     if os.path.isfile(options.outfile):
@@ -294,11 +294,25 @@ if __name__ == '__main__':
     add JAS stuff here
     """
     JASString = spq.toJAS()
-	
-    outputFileName = spq.file_name.replace(".csv", ".jpp").replace(".processed", "")
-	
-    with open(outputFileName, "w") as fp:
+    
+    outputFileName = os.path.basename(spq.file_name.replace(".csv", ".jpp").replace(".processed", ""))
+    
+    outPath = os.path.join("C:\\", "FIREBIRD", "FU_{0}".format(spq.FU_Num_From_SPQ()), "JAS_Files")    
+    with open(os.path.join(outPath, os.path.basename(outputFileName)), "w") as fp:
         fp.write(JASString)
-        print("Wrote: {0}".format(os.path.abspath(outputFileName)))
-    
-    
+        print("Wrote: {0}".format(os.path.join(outPath, os.path.basename(outputFileName))))
+		
+		
+	outPath = os.path.join("C:\\", 
+	    "MSU", 
+		"InControl-NG-Data", 
+		"MSU-Data-5.8.14.1.37607", 
+		"scopedData", 
+		"Shared", 
+		"FIREBIRD", 
+		"procedures", 
+		"FU_{0}".format(spq.FU_Num_From_SPQ()), 
+		"FU_{0}_Scheduled".format(spq.FU_Num_From_SPQ()))
+    with open(os.path.join(outPath, os.path.basename(outputFileName)), "w") as fp:
+        fp.write(JASString)
+        print("Wrote: {0}".format(os.path.join(outPath, os.path.basename(outputFileName))))
