@@ -110,6 +110,8 @@ class Entry(object):
         if not isinstance(date, datetime.datetime):
             raise(TypeError('Invalid datetime.datetime object for date'))
         self.date = date
+        if self.date < datetime.datetime(2013, 12, 1):
+            raise(ValueError('Invalid date, before launch: {0}'.format(self.date)))                        
         self.duration = int(duration)
         if self.duration <= 0:
             raise(ValueError('Invalid duration: {0}, must be positive'.format(self.duration)))            
