@@ -9,16 +9,15 @@ from page import page
 
 
 
-
 def printBurstPage(inpage):
     """
     print out a Burst page for debugging
     """
     # the first one is 8+8 bytes then 8+8
     dat = inpage.split(' ')
-    print ' '.join(dat[0:8+10])
-    for ii in range(8+10, len(dat), 12):
-        print ' '.join(dat[ii:ii+12])
+    print ' '.join(dat[0:majorTimelen+datalen])
+    for ii in range(majorTimelen+datalen, len(dat), datalen+minorTimelen):
+        print ' '.join(dat[ii:ii+datalen+minorTimelen])
 
 
 datalen = 10
@@ -90,6 +89,7 @@ class burstPage(FIREdata.dataPage):
         for v1, v2 in zip(dt2, dout):
             self.append( (v1, v2) )
 
+
 class burst(FIREdata.data):
     """
     a datatimes data file
@@ -99,7 +99,8 @@ class burst(FIREdata.data):
         data = np.hstack(zip(*inlst)[1]).reshape((-1, 2))
         dat = dm.SpaceData()
 
-        # go through Brurst and change the data type and set the None to fill
+        # go through Burst and change the data type and set the None to fill
+        # TODO this does not work, need to decide how
         tmp = np.zeros(data.shape, dtype=int)
         for (i, j), val in np.ndenumerate(data):
             try:
@@ -187,7 +188,7 @@ class burst(FIREdata.data):
                     # for Burst we need to find 2 minors in 14 bytes
                     skip_num = 0
                     try:
-                        while start_ind < len(p) and \
+                        while start_ind < len(p)-(minorTimelen+datalen) and \
                               ((int(p[start_ind], 16)-int(p[start_ind+minorTimelen+datalen],16)) != 0 or \
                                (int(p[start_ind], 16)-int(p[start_ind+minorTimelen+datalen],16)) != 1) and \
                               ((int(p[start_ind+1], 16)-int(p[start_ind+minorTimelen+datalen+1],16)) != 1 or \

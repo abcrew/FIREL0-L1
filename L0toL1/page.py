@@ -7,7 +7,7 @@ class page(str):
     class to represent a page of data for any of the types
     """
     @classmethod
-    def fromPackets(self, packets):
+    def fromPackets(self, packets, fullreturn=False):
         """
         given a BIRDpackets class create a list of pages
         """
@@ -26,6 +26,8 @@ class page(str):
         """
         pages = []
         outval = []
+        pages_info = []
+        curr_info  = []
         pn = packets[0].pktnum
         # the first packet in a L0 file is a new page
         #   if a page is downlinked across the day boundry maybe not
@@ -36,14 +38,18 @@ class page(str):
             if ii == 0:
                 # this is the first on a file, put it into a page
                 outval.extend(p.data)
+                curr_info.extend([p.pktnum]*len(p.data))
                 # and update the current seqindex and paketnumber
                 si1 = si
                 pn1 = pn
             elif si == si1 and pn > pn1:
                 # add in None for each missing paketnumber
                 #   Note that [None]*0 is an empty list
+                #  TODO working here
                 nNone = (int(pn, 16)-int(pn1, 16)-1)
                 outval.extend([None]*nNone)
+                curr_info.extend(p.pktnum)
+                curr_info.extend([None]*nNone)
                 if nNone:
                     print("Found a missing packet before, GRT:{3} num:{0}:{1}:{2}".format(p.seqnum,
                                                                                           p.seqidx,

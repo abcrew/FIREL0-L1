@@ -84,14 +84,19 @@ class data(object):
 
     @classmethod
     @abc.abstractmethod
-    def read(self, filename):
+    def read(self, filename, retpktnum=False):
         """read in the data from the file"""
         b = packet.BIRDpackets(filename)
         print('    Read {0} packets'.format(len(b)))
         pages = page.page.fromPackets(b)
         print('    Read {0} pages'.format(len(pages)))
-        return pages
-            
+        if retpktnum:
+            # build a list the size of pages that tells the
+            #  pktnum of each byte in the pages list
+            return pages, b
+        else:
+            return pages
+        
 class dataPage(list):
     __metaclass__ = abc.ABCMeta
 

@@ -138,8 +138,11 @@ class context(FIREdata.data):
                         #    the context() class then needs to catch the None and set to fill
                         fill = ['00'] * ((majorTimelen+datalen) - missing_ind)
                         cp = contextPage(p[start_ind:stop_ind][0:missing_ind] + fill)
-                        cp[0][1][1] = [None]
-                        print("\t{0} Filled some data".format(cp[0][0].isoformat()))
+                        try:
+                            cp[0][1][1] = [None]
+                            print("\t{0} Filled some data".format(cp[0][0].isoformat()))
+                        except IndexError:
+                            pass
                         stop_ind -= (len(p[start_ind:stop_ind])-missing_ind-1)
                         skipped=1
                     else:

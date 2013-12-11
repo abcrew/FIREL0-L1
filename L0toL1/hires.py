@@ -7,6 +7,86 @@ import FIREdata
 import packet
 from page import page
 
+
+
+def printHiresPage(inpage):
+    """
+    print out a hires page for debugging
+    """
+    # the first one is 8 bytes then 24
+    dat = inpage.split(' ')
+    print ' '.join(dat[0:datalen+majorTimelen])
+    for ii in range(datalen+majorTimelen, len(dat), datalen+minorTimelen):
+        print ' '.join(dat[ii:ii+datalen+minorTimelen])
+
+
+datalen = 24
+majorTimelen = 8
+minorTimelen = 2
+
+class hiresPage(FIREdata.dataPage):
+    """
+    a page of hires data
+
+    each hi res starts a page with a full 8 byte time stamp then
+    24 bytes of data then a 2 byte ms then 24 then 2 on and on
+    """
+    def __init__(self, inpage):
+        len1 = datalen+majorTimelen
+        len2 = datalen+minorTimelen
+        dat = FIREdata.hex2int(inpage)
+
+        if len(inpage) == len1: # major
+            try:
+                self.t0 = FIREdata.dat2time(dat[0:8])
+                self.major_data(dat)
+            except ValueError:
+                return
+            print("\tData at time {0} decoded".format(self[-1][0].isoformat()))
+        elif len(inpage) == len2: # minor
+            try:
+                self.minor_data(dat, h)
+            except ValueError:
+                return
+
+    def major_data(self, inval):
+        """
+        read in and add major data to the class
+        """
+        dt = FIREdata.dat2time(inval[0:8])
+
+        if (np.asarray(inval) == '00').all(): # is this line fill?
+            return
+        dt = FIREdata.dat2time(inval[0:8])
+        d1 = np.asarray(inval[self._majorTimelen::2])
+        d2 = np.asarray(inval[self._majorTimelen+1::2])
+        self.append([dt, d2*2**8+d1])
+
+    def minor_data(self, inval):
+        """
+        read in and add minor data to the class
+        """
+        if (np.asarray(inval) == '00').all(): # is this line fill?
+            return
+        # get the last time
+        dt = self[-1][0]
+        # we need to replace the milliseconds
+        us = 1000*(inval[0]*2**8 + inval[1])
+        if  us < self[-1][0].microsecond:
+            dt += datetime.timedelta(seconds=1)
+        if us == 1000000:
+            print("found us=1000000")
+            dt += datetime.timedelta(seconds=1)
+        elif us > 1000000:
+            print("found us>1000000")
+            return
+        else:
+            dt = dt.replace(microsecond=us)
+        d1 = np.asarray(inval[self._minorTimelen::2])
+        d2 = np.asarray(inval[self._minorTimelen+1::2])
+        self.append([dt, d2*2**8+d1])
+
+
 class hires(FIREdata.data):
     """
     a hi-res data file
@@ -15,6 +95,16 @@ class hires(FIREdata.data):
         dt = zip(*inlst)[0]
         counts = np.hstack(zip(*inlst)[1]).reshape((-1, 12))
         dat = dm.SpaceData()
+
+        # go through the data and change the dtype and set the None to fill
+        # TODO this does not work, need to decide how
+        tmp = np.zeros(data.shape, dtype=int)
+        for (i, j), val in np.ndenumerate(data):
+            try:
+                tmp[i,j] = val
+            except (TypeError, ValueError):
+                tmp[i,j] = -2**16-1
+
         dat['Epoch'] = dm.dmarray(dt)
         dat['Epoch'].attrs['CATDESC'] = 'Default Time'
         dat['Epoch'].attrs['FIELDNAM'] = 'Epoch'
@@ -55,79 +145,91 @@ class hires(FIREdata.data):
         dat['hr1'].attrs['DEPENDNAME_0'] = 'Epoch'
         self.data = dat
 
+# TODO working here
     @classmethod
     def read(self, filename):
-        pages = super(hires, self).read(filename)
         h = []
+        # need to have pages and packet information
+        pages, pktnum = super(hires, self).read(filename, retpktnum=True)
+        # If we do not start with a pktnum = 01 skip this page until we find a pktnum
+        #  01 because that has the full time stamp
+        #  TODO it may be possible to work backwards using the seqidx and seqnum
+
         for p in pages:
-            h.extend(hiresPage(p))
-        # sort the data
-        h = sorted(h, key = lambda x: x[0])
+            # is a page dpes not start with packet zero it is lost
+            #   as the absolute time cannot be figured out
+            1/0
+            start_ind = 0
+            stop_ind  = start_ind + datalen + majorTimelen
+##            while stop_ind < (len(p)-minorTimelen-datalen):
+            while stop_ind < len(p):
+                skipped = 0
+                if None not in p[start_ind:stop_ind]:
+                    # the data is all there in a row just make a hires object
+                    cp = hiresPage(p[start_ind:stop_ind], h)
+                else:
+                    print("Encountered a missing packet")
+                    missing_ind = p[start_ind:stop_ind].index(None)
+                    if missing_ind < (minorTimelen-1):
+                        # did not have a whole time stamp skip the hires there is not useful info
+                        print("\tSkipped data no time stamp".format())
+                        skipped=1
+                    elif missing_ind >= (minorTimelen+1)-1:
+                        # this means we have a valid time stamp and at least 1 valid measurement
+                        #    so fill in the missing bytes with 00 and then set it to None
+                        #    the hires() class then needs to catch the None and set to fill
+                        fill = ['00'] * ((minorTimelen+datalen) - missing_ind)
+                        cp = hiresPage(p[start_ind:stop_ind][0:missing_ind] + fill, h)
+                        cp[0][1][1] = [None]
+                        print("\t{0} Filled some data".format(cp[0][0].isoformat()))
+                        stop_ind -= (len(p[start_ind:stop_ind])-missing_ind-1)
+                        skipped=1
+                    else:
+                        # this means no valid data so fill in the missing bytes with 00 and then set it to None
+                        #    the hires() class then needs to catch the None and set to fill
+                        #    we are keeping this since there was a valid time stamp
+                        fill = ['00'] * ((minorTimelen+datalen) - missing_ind)
+                        cp = hiresPage(p[start_ind:stop_ind][0:missing_ind] + fill, h)
+                        if cp:
+                            cp[0][1][:] = [None, None]
+                            print("\t{0} Filled all data".format(cp[0][0].isoformat()))
+                        stop_ind -= (len(p[start_ind:stop_ind])-missing_ind-1)
+                        skipped=1
+
+                start_ind = stop_ind
+                if skipped:
+                    # we need to get back on sync, for these data that means finding a
+                    #   valid date in the data
+                    # for Hires we need to find 2 minors in 14 bytes
+                    skip_num = 0
+                    try:
+                        while start_ind < len(p) and \
+                              ((int(p[start_ind], 16)-int(p[start_ind+minorTimelen+datalen],16)) != 0 or \
+                               (int(p[start_ind], 16)-int(p[start_ind+minorTimelen+datalen],16)) != 1) and \
+                              ((int(p[start_ind+1], 16)-int(p[start_ind+minorTimelen+datalen+1],16)) != 1 or \
+                               (int(p[start_ind+1], 16)-int(p[start_ind+minorTimelen+datalen+1],16)) < 0):
+                            start_ind += 1
+                            skip_num += 1
+                    except IndexError:
+                        continue
+                    # TODO needed another +1 here for some reason
+                    start_ind += 1
+                    skip_num += 1
+                    print("\t\tSkipped {0} bytes at the start of the next packet".format(skip_num))
+
+                stop_ind = start_ind + (datalen + minorTimelen)
+                h.extend(cp)
+                        
+        print("Decoded {0} hires measurements".format(len(h)))
         return hires(h)
 
 
-def printHiresPage(inpage):
-    """
-    print out a hires page for debugging
-    """
-    # the first one is 8 bytes then 24
-    dat = inpage.split(' ')
-    print ' '.join(dat[0:24+8])
-    for ii in range(24+8, len(dat), 24+2):
-        print ' '.join(dat[ii:ii+24+2])
 
-class hiresPage(FIREdata.dataPage):
-    """
-    a page of hires data
-    """
-    def __init__(self, inpage):
-        self._datalen = 24
-        self._majorTimelen = 8
-        self._minorTimelen = 2
 
-        dat = inpage.split(' ')
-        dat = [int(v, 16) for v in dat]
+"""
+a missing page means 248 / 26 => 9.5 samples missing the ms should be valid
+just 15*9=135 ms later so it might oftern roll over
+"""
 
-        self.t0 = FIREdata.dat2time(inpage[0:25])
-        # now the data length is 24
-        self.major_data(dat[0:self._datalen+self._majorTimelen])
-        start = self._datalen+self._majorTimelen
-        for ii in range(start, len(dat), self._datalen+self._minorTimelen): # the index of the start of each FIRE data
-            stop = ii+self._datalen+self._minorTimelen  # 24 bytes of data and 2 for a minor time stamp
-            self.minor_data(dat[ii:stop])
-        # sort the data
-        self = sorted(self, key = lambda x: x[0])
 
-    def minor_data(self, inval):
-        """
-        read in and add minor data to the class
-        """
-        if len(inval) < self._datalen+self._minorTimelen:
-            return
-        if (np.asarray(inval) == 0).all(): # is this line fill?
-            return
-        dt = self[-1][0]
-        us = 1000*(inval[0]*2**8 + inval[1])
-        if  us < self[-1][0].microsecond:
-            dt += datetime.timedelta(seconds=1)
-        if us == 1000000:
-            dt += datetime.timedelta(seconds=1)
-        elif us > 1000000:
-            return
-        else:
-            dt = dt.replace(microsecond=us)
-        d1 = np.asarray(inval[self._minorTimelen::2])
-        d2 = np.asarray(inval[self._minorTimelen+1::2])
-        self.append([dt, d2*2**8+d1])
-
-    def major_data(self, inval):
-        """
-        read in and add major data to the class
-        """
-        if (np.asarray(inval) == 0).all(): # is this line fill?
-            return
-        dt = FIREdata.dat2time(inval[0:8])
-        d1 = np.asarray(inval[self._majorTimelen::2])
-        d2 = np.asarray(inval[self._majorTimelen+1::2])
-        self.append([dt, d2*2**8+d1])
 
