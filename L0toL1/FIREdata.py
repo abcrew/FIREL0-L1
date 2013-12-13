@@ -10,6 +10,17 @@ from spacepy import datamodel as dm
 import packet
 import page
 
+
+def total_seconds(dt):
+    """
+    make up for pyhton2.6 not having datetime.timedelta.total_seconds
+    """
+    ans = dt.days * 24 * 60 * 60
+    ans += dt.seconds
+    ans += (dt.microseconds / 1e6)
+    return ans
+
+
 def hex2int(inpage):
     """
     convert a page of ascii hex data to integrers and None as needed
@@ -77,9 +88,9 @@ class data(object):
     """
     def write(self, filename, hdf5=False):
         if hdf5:
-            dm.toHDF5(filename, self.data)
+            dm.toHDF5(filename, self.dat)
         else:
-            dm.toJSONheadedASCII(filename, self.data, order=['Epoch'] )
+            dm.toJSONheadedASCII(filename, self.dat, order=['Epoch'] )
         print('    Wrote {0}'.format(os.path.abspath(filename)))
 
     @classmethod
@@ -96,7 +107,7 @@ class data(object):
             return pages, b
         else:
             return pages
-        
+
 class dataPage(list):
     __metaclass__ = abc.ABCMeta
 
