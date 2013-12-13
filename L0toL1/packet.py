@@ -47,7 +47,11 @@ class BIRDpacket(object):
             return False
 
     def __str__(self):
-        return('BIRDpacket: GRT: {0} Len:{1}'.format(self.grt.isoformat(), int(self.datalen, 16)))
+        return('BIRDpacket: GRT: {0} Len:{1} Seqidx:{2} Seqnum:{3} Pktnum:{4}'.format(self.grt.isoformat(),
+                                                                                      int(self.datalen, 16),
+                                                                                      self.seqidx,
+                                                                                      self.seqnum,
+                                                                                      self.pktnum))
 
     __repr__ = __str__
 

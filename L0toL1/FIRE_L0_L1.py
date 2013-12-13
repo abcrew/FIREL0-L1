@@ -77,6 +77,7 @@ if __name__ == '__main__':
     elif tp == 'contextfile':
         d = context.read(infile)
     elif tp == 'hiresfile':
+        hires = hires()
         d = hires.read(infile)
     elif tp == 'datatimes':
         d = datatimes.read(infile)
