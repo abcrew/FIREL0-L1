@@ -242,6 +242,16 @@ class hires(FIREdata.data):
                 dataBuffer.extend(packet_.data) # grab the data out
                 # look though the dataBuffer looking for what seems to be 2 minor stamps
                 #   the right length apart
+                while len(dataBuffer) > 0:
+                    t1 = int(dataBuffer[0]+dataBuffer[1], 16)
+                    t2 = int(dataBuffer[0+datalen+2]+dataBuffer[1+datalen+2], 16)
+                    if (t2 == t1+15) or (t2 == t1+30) or \
+                        (t2 == t1+15-1e6) or (t2 == t1+30-1e6): # this is certainly correct
+                        break
+                    else:
+                        dataBuffer.pop(0)
+
+
                 meas_ind += ( measurement_per_packet * (int(packet_.pktnum, 16)-int(previous_packet.pktnum, 16)))
                 # just let the while loop below take case of the data
 
