@@ -69,17 +69,20 @@ if __name__ == '__main__':
         parser.error("Could not determine the file type and flag not given: {0}".format(infile))
 
     print('Determined input file type to be: {0}'.format(tp))
-    
+
     if tp == 'configfile':
         d = config.read(infile)
     elif tp == 'mbpfile':
         d = burst.read(infile)
     elif tp == 'contextfile':
+#        context = context()
         d = context.read(infile)
+        d.dat = d.data
     elif tp == 'hiresfile':
         hires = hires()
         d = hires.read(infile)
     elif tp == 'datatimes':
+        datatimes = datatimes()
         d = datatimes.read(infile)
     else:
         raise(ValueError())
@@ -94,15 +97,15 @@ if __name__ == '__main__':
     if tp == 'datatimes':
         d_bak = copy.deepcopy(d)
         # grab only the good data times (this means duration is at least 90 minutes)
-        ind = (d.data['Duration'] > 5400) & (d.data['Duration'] < 6200)    # 90 minutes
-        for k in d.data:
-            d.data[k] = d.data[k][ind]
+        ind = (d.dat['Duration'] > 5400) # & (d.dat['Duration'] < 6200)    # 90 minutes
+        for k in d.dat:
+            d.dat[k] = d.dat[k][ind]
         d.write(outfile.replace('.txt', '_good.txt'), hdf5=options.hdf5)
         d = d_bak
         ind = ~ind
-        for k in d.data:
-            d.data[k] = d.data[k][ind]
+        for k in d.dat:
+            d.dat[k] = d.dat[k][ind]
         d.write(outfile.replace('.txt', '_bad.txt'), hdf5=options.hdf5)
-            
+
 
 

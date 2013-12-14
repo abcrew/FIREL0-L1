@@ -33,20 +33,6 @@ class hires(FIREdata.data):
     """
     def __init__(self):
         self.dat = self.getSkel()
-        pass
-
-        ## dt = zip(*inlst)[0]
-        ## counts = np.hstack(zip(*inlst)[1]).reshape((-1, 12))
-        ## dat = dm.SpaceData()
-
-        ## # go through the data and change the dtype and set the None to fill
-        ## # TODO this does not work, need to decide how
-        ## tmp = np.zeros(data.shape, dtype=int)
-        ## for (i, j), val in np.ndenumerate(data):
-        ##     try:
-        ##         tmp[i,j] = val
-        ##     except (TypeError, ValueError):
-        ##         tmp[i,j] = -2**16-1
 
     def getSkel(self):
         dat = dm.SpaceData()

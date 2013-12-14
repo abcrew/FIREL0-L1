@@ -38,7 +38,7 @@ class contextPage(FIREdata.dataPage):
         self.major_data(dat[0:datalen+majorTimelen])
         start = datalen+majorTimelen
         # the index of the start of each FIRE data
-        for ii in range(start, len(dat), datalen+minorTimelen): 
+        for ii in range(start, len(dat), datalen+minorTimelen):
             stop = ii+datalen+majorTimelen
             try:
                 self.minor_data(dat[ii:stop])
@@ -79,36 +79,47 @@ class context(FIREdata.data):
             except (TypeError, ValueError):
                 tmp[i,j] = -2**16-1
 
-        
+
         dat = dm.SpaceData()
 
         dat['Context'] = dm.dmarray(tmp[:])
         dat['Context'].attrs['CATDESC'] = 'Context data'
         dat['Context'].attrs['FIELDNAM'] = 'Context'
-        dat['Context'].attrs['LABLAXIS'] = 'Context data'
-        dat['Context'].attrs['SCALETYP'] = 'log'
+        dat['Context'].attrs['ELEMENT_LABELS'] = "Det_0", "Det_1",
+        dat['Context'].attrs['ELEMENT_NAMES'] = "Det_0", "Det_1",
+        dat['Context'].attrs['LABEL'] = 'Context data'
+        dat['Context'].attrs['SCALE_TYPE'] = 'log'
         #dat['time'].attrs['UNITS'] = 'none'
         dat['Context'].attrs['UNITS'] = ''
-        dat['Context'].attrs['VALIDMIN'] = 0
-        dat['Context'].attrs['VALIDMAX'] = 2**15-1
+        dat['Context'].attrs['VALID_MIN'] = 0
+        dat['Context'].attrs['VALID_MAX'] = 2**15-1
         dat['Context'].attrs['VAR_TYPE'] = 'data'
         dat['Context'].attrs['VAR_NOTES'] = 'Context data 6s average'
         dat['Context'].attrs['DEPEND_0'] = 'Epoch'
-        dat['Context'].attrs['FILLVAL'] = -2**16-1
+        dat['Context'].attrs['FILL_VALUE'] = -2**16-1
 
         dat['Epoch'] = dm.dmarray(dt)
         dat['Epoch'].attrs['CATDESC'] = 'Default Time'
         dat['Epoch'].attrs['FIELDNAM'] = 'Epoch'
         #dat['Epoch'].attrs['FILLVAL'] = datetime.datetime(2100,12,31,23,59,59,999000)
-        dat['Epoch'].attrs['LABLAXIS'] = 'Epoch'
-        dat['Epoch'].attrs['SCALETYP'] = 'linear'
-        dat['Epoch'].attrs['VALIDMIN'] = datetime.datetime(1990,1,1)
-        dat['Epoch'].attrs['VALIDMAX'] = datetime.datetime(2029,12,31,23,59,59,999000)
+        dat['Epoch'].attrs['LABEL'] = 'Epoch'
+        dat['Epoch'].attrs['SCALE_TYPE'] = 'linear'
+        #        dat['Epoch'].attrs['VALID_MIN'] = datetime.datetime(1990,1,1)
+        #        dat['Epoch'].attrs['VALID_MAX'] = datetime.datetime(2029,12,31,23,59,59,999000)
         dat['Epoch'].attrs['VAR_TYPE'] = 'support_data'
         dat['Epoch'].attrs['TIME_BASE'] = '0 AD'
         dat['Epoch'].attrs['MONOTON'] = 'INCREASE'
         dat['Epoch'].attrs['VAR_NOTES'] = 'Epoch at each configuration point'
 
+
+        # go through and remove duplicate times and data
+        print("Looking for duplicate measurements")
+
+        arr, dt_ind, return_inverse = np.unique(dat['Epoch'], return_index=True, return_inverse=True) # this is unique an sort
+        print("Found {0} duplicates of {1}".format(len(return_inverse)-len(dt_ind), len(return_inverse)))
+
+        dat['Epoch'] = arr
+        dat['Context'] = dat['Context'][dt_ind]
 
         self.data = dat
 
@@ -171,7 +182,8 @@ class context(FIREdata.data):
 
                 stop_ind = start_ind + (datalen + majorTimelen)
                 h.extend(cp)
-                        
+
+
         print("Decoded {0} context measurements".format(len(h)))
         return context(h)
 
