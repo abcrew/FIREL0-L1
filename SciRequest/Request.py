@@ -57,13 +57,17 @@ def readSPQ(fname):
             continue
         v2 = v.split()
         # CONFIG, 2013, 12, 5, 0, 0, 0, 271, NONE
-        date = datetime.datetime(int(v2[1].replace(',', '')), #Y
-                                 int(v2[2].replace(',', '')), #M
-                                 int(v2[3].replace(',', '')), #D
-                                 int(v2[4].replace(',', '')), #h
-                                 int(v2[5].replace(',', '')), #m
-                                 int(v2[6].replace(',', '')))  #s
-        entry = Entry(scname, v2[0].replace(',', ''), date, int(v2[7].replace(',', '')), 100) # priority is 100
+        if 'DATA_TIMES' in v2[0]:
+            date = datetime.datetime.now()
+            entry = Entry(scname, 'DATA_TIMES', datetime.datetime.utcnow().replace(microsecond=0), 1, 1000)
+        else:
+            date = datetime.datetime(int(v2[1].replace(',', '')), #Y
+                                     int(v2[2].replace(',', '')), #M
+                                     int(v2[3].replace(',', '')), #D
+                                     int(v2[4].replace(',', '')), #h
+                                     int(v2[5].replace(',', '')), #m
+                                     int(v2[6].replace(',', '')))  #s
+            entry = Entry(scname, v2[0].replace(',', ''), date, int(v2[7].replace(',', '')), 100) # priority is 100
         request.addEntry(entry)
     return request
 
@@ -86,7 +90,7 @@ def parseData_Times(fname):
     outdat['Off'] = np.asarray( [t1[~data['Mode'].astype(np.bool)], t2[~data['Mode'].astype(np.bool)]]).T
     return outdat
 
-    
+
 class Entry(object):
     """
     class to hold a single entry in a Request
@@ -111,10 +115,10 @@ class Entry(object):
             raise(TypeError('Invalid datetime.datetime object for date'))
         self.date = date
         if self.date < datetime.datetime(2013, 12, 1):
-            raise(ValueError('Invalid date, before launch: {0}'.format(self.date)))                        
+            raise(ValueError('Invalid date, before launch: {0}'.format(self.date)))
         self.duration = int(duration)
         if self.duration <= 0:
-            raise(ValueError('Invalid duration: {0}, must be positive'.format(self.duration)))            
+            raise(ValueError('Invalid duration: {0}, must be positive'.format(self.duration)))
         self.priority = int(priority)
         self.JAS = JAS
         self.downlinktime = None # to be filled by a calculation
@@ -147,7 +151,7 @@ class Entry(object):
             raise(FIREOffException('FIRE was off for {0}'.format(self.date)))
         if len(df_on) > 1:
             raise(NotImplementedError('Start is in two on times, did not expect this'))
-        # is the request end inside an on time? 
+        # is the request end inside an on time?
         end_date = self.date + datetime.timedelta(seconds=self.duration)
 
         if end_date > ontimes[df_on[0]][1]:  # checking the off time
@@ -155,7 +159,7 @@ class Entry(object):
                 self.duration -= 1
                 end_date = self.date + datetime.timedelta(seconds=self.duration)
             warnings.warn("Downlink time was longer than allowed, duration shortened to {0}".format(self.duration))
-            
+
     @property
     def endDate(self):
         """
@@ -163,7 +167,7 @@ class Entry(object):
         this is self.date+duration
         """
         return self.date + datetime.timedelta(seconds=self.duration)
-            
+
 #    def __eq__(self, other):
 #        """
 #        if the pieces match they are equal
@@ -221,11 +225,11 @@ class Entry(object):
             ans = ', '.join([Entry._toStr(self.typ),
                              '',
                              '',
-                             '', 
-                             '', 
-                             '', 
-                             '', 
-                             '',                          
+                             '',
+                             '',
+                             '',
+                             '',
+                             '',
                              Entry._toStr(self.JAS) ])
         else:
             ans = ', '.join([Entry._toStr(self.typ),
