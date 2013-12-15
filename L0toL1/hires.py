@@ -230,9 +230,13 @@ class hires(FIREdata.data):
                 #   the right length apart
                 while len(dataBuffer) > 0:
                     t1 = int(dataBuffer[0]+dataBuffer[1], 16)
-                    t2 = int(dataBuffer[0+datalen+2]+dataBuffer[1+datalen+2], 16)
-                    if (t2 == t1+15) or (t2 == t1+30) or \
-                        (t2 == t1+15-1e6) or (t2 == t1+30-1e6): # this is certainly correct
+                    try:
+                        t2 = int(dataBuffer[0+datalen+2]+dataBuffer[1+datalen+2], 16)
+                        if (t2 == t1+15) or (t2 == t1+30) or \
+                               (t2 == t1+15-1e6) or (t2 == t1+30-1e6): # this is certainly correct
+                            break
+                    except IndexError: # there is no more data
+                        # assume this is good
                         break
                     else:
                         dataBuffer.pop(0)
