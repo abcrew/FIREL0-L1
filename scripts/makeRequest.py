@@ -20,12 +20,12 @@ except ImportError:
 import sys
 import warnings
 
-from Request import Entry
-from Request import Request
-from Request import typeDict
-from Request import parseData_Times
-from Request import FIREOffException
-from Request import readSPQ
+from SciRequest.Request import Entry
+from SciRequest.Request import Request
+from SciRequest.Request import typeDict
+from SciRequest.Request import parseData_Times
+from SciRequest.Request import FIREOffException
+from SciRequest.Request import readSPQ
 
 warnings.simplefilter('always')
 
