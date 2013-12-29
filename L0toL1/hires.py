@@ -1,21 +1,26 @@
 from __future__ import division
 
+from collections import deque
+import copy
 import datetime
+import time
 
 import numpy as np
 from spacepy import datamodel as dm
 
+from dataSkeletons import getSkelHIRES
 import FIREdata
 from FIREdata import total_seconds
 import packet
 
 MFIB_transfer_time = 10*48 / 115200 * 1e6 # microseconds
 # this is 48 bytes, 8 bits per byte, plus a start and stop
-#  transferred at 11520 baud, then 1e6 seconds to microseconds
+#  transferred at 115200 baud, then 1e6 seconds to microseconds
+MFIB_transfer_timeDT = datetime.timedelta(microseconds=MFIB_transfer_time)
 
 measurement_time = 18.75*1e3 # this is settable but I bet we will not change it.
 # this is 18.75ms measurment and then 1e3 to go o microseconds
-
+measurement_timeDT = datetime.timedelta(microseconds=measurement_time)
 
 datalen = 24
 majorTimelen = 8
@@ -26,259 +31,336 @@ minorLen = datalen+minorTimelen
 measurement_per_packet = 238 // minorLen
 # this is the number of measurments we hav to add if we miss a packet
 
+time_diffDT =  [datetime.timedelta(microseconds=11.25e3),
+                datetime.timedelta(microseconds=7.5e3),
+                datetime.timedelta(microseconds=3.75e3),
+                datetime.timedelta(microseconds=0e3),]
+#                datetime.timedelta(microseconds=15e3)]
+
+
+
+
+def timeDuration(msg, tm):
+    tm2 = time.time()
+    print("{0} took {1:0.2f} seconds".format(msg, tm2-tm))
+    return tm2
+
+
+def index(val, data):
+    """
+    given a numpy array find the first occurance of val in the array
+    - this is a feature request in numpy 2.x
+    - same as the [].index() for a list
+    """
+    for ii, v in enumerate(data):
+        if val == v:
+            return ii
+    raise(ValueError("{0} is not in in the array".format(val)))
+
+class contigousPackets(list):
+    """
+    class to hold contigous packets
+    """
+    def majorStamps(self):
+        """
+        return the major time stamps
+        """
+        major = []
+        for v in self:
+            if v.pktnum == '01': # this is a major stamp
+                major.append(v)
+        stamps = []
+        for v in major:
+            stamps.append(FIREdata.dat2time(FIREdata.hex2int(v.data[:8])))
+        return stamps
+
+    @classmethod
+    def fromPackets(cls, inval):
+        """
+        given an input list of packets return a list of contigousPackets() objects
+        for each contigous chunk in the input list
+        """
+        # loop over all the packets
+        # place first into a new contigousPackets() object
+        # if the next is contigous append it
+        # else make a new object and continue
+        ans = []
+        cp = cls([inval[0]])
+        for v in inval[1:]: # loop over packets
+            if cls.isContigous(cp[-1], v):
+                cp.append(v)
+            else:
+                ans.append(cp)
+                cp = cls([v])
+        if cp:
+            ans.append(cp)
+        return ans            
+        
+        
+    @staticmethod
+    def isContigous(in1, in2):
+        """
+        return True if in2 is contigous after in1 False otherwise
+        """
+        if in1.seqnum != in2.seqnum: # different request
+            return False
+        if (in1.seqidx == in2.seqidx) and \
+               (int(in1.pktnum, 16)+1 == int(in2.pktnum, 16)):
+            # same page, next packet
+            return True
+        if (int(in1.seqidx, 16)+1 == int(in2.seqidx, 16)) and  \
+           (in1.pktnum == '13' and in2.pktnum == '01'):
+            # next page, first to last packet
+            return True
+        return False
 
 class hires(FIREdata.data):
     """
     a hi-res data file
     """
     def __init__(self):
-        self.dat = self.getSkel()
-
-    def getSkel(self):
-        dat = dm.SpaceData()
-        dat['Epoch'] = dm.dmarray([])
-        dat['Epoch'].attrs['CATDESC'] = 'Default Time'
-        dat['Epoch'].attrs['FIELDNAM'] = 'Epoch'
-        #dat['Epoch'].attrs['FILLVAL'] = datetime.datetime(2100,12,31,23,59,59,999000)
-        dat['Epoch'].attrs['LABLAXIS'] = 'Epoch'
-        dat['Epoch'].attrs['SCALETYP'] = 'linear'
-        #dat['Epoch'].attrs['VALIDMIN'] = datetime.datetime(1990,1,1)
-        #dat['Epoch'].attrs['VALIDMAX'] = datetime.datetime(2029,12,31,23,59,59,999000)
-        dat['Epoch'].attrs['VAR_TYPE'] = 'support_data'
-        dat['Epoch'].attrs['TIME_BASE'] = '0 AD'
-        dat['Epoch'].attrs['MONOTON'] = 'INCREASE'
-        dat['Epoch'].attrs['VAR_NOTES'] = 'Epoch at each hi-res measurement'
-        dat['hr0'] = dm.dmarray([], dtype=int)
-        dat['hr0'].attrs['CATDESC'] = 'Detector 0 hi-res'
-        dat['hr0'].attrs['ELEMENT_LABELS'] = "hr0_0", "hr0_1", "hr0_2", "hr0_3", "hr0_4", "hr0_5",
-        dat['hr0'].attrs['ELEMENT_NAMES'] =  "hr0-0", "hr0-1", "hr0-2", "hr0-3", "hr0-4", "hr0-5",
-        dat['hr0'].attrs['FILL_VALUE'] = -2**16
-        dat['hr0'].attrs['LABEL'] = 'Detector 0 hi-res'
-        dat['hr0'].attrs['SCALE_TYPE'] = 'log'
-        dat['hr0'].attrs['UNITS'] = 'counts'
-        dat['hr0'].attrs['VALID_MIN'] = 0
-        dat['hr0'].attrs['VALID_MAX'] = 2**16-1
-        dat['hr0'].attrs['VAR_TYPE'] = 'data'
-        dat['hr0'].attrs['VAR_NOTES'] = 'hr0 for each channel'
-        dat['hr0'].attrs['DEPEND_0'] = 'Epoch'
-        dat['hr0'].attrs['DEPEND_1'] = 'Channel'
-        dat['hr1'] = dm.dmarray([], dtype=int)
-        dat['hr1'].attrs['CATDESC'] = 'Detector 1 hi-res'
-        dat['hr1'].attrs['ELEMENT_LABELS'] = "hr1_0", "hr1_1", "hr1_2", "hr1_3", "hr1_4", "hr1_5",
-        dat['hr1'].attrs['ELEMENT_NAMES'] =  "hr1-0", "hr1-1", "hr1-2", "hr1-3", "hr1-4", "hr1-5",
-        dat['hr1'].attrs['FILL_VALUE'] = -2**16
-        dat['hr1'].attrs['LABEL'] = 'Detector 1 hi-res'
-        dat['hr1'].attrs['SCALE_TYPE'] = 'log'
-        dat['hr1'].attrs['UNITS'] = 'counts'
-        dat['hr1'].attrs['VALID_MIN'] = 0
-        dat['hr1'].attrs['VALID_MAX'] = 2**16-1
-        dat['hr1'].attrs['VAR_TYPE'] = 'data'
-        dat['hr1'].attrs['VAR_NOTES'] = 'hr1 for each channel'
-        dat['hr1'].attrs['DEPEND_0'] = 'Epoch'
-        dat['hr1'].attrs['DEPEND_1'] = 'Channel'
-        dat['Channel'] = dm.dmarray(range(6))
-        dat['Channel'].attrs['CATDESC'] = 'Channel Number'
-        dat['Channel'].attrs['ELEMENT_LABELS'] = "0", "1", "2", "3", "4", "5",
-        dat['Channel'].attrs['ELEMENT_NAMES'] =  "0", "1", "2", "3", "4", "5",
-        dat['Channel'].attrs['FILL_VALUE'] = -2**16
-        dat['Channel'].attrs['LABEL'] = 'Channel'
-        dat['Channel'].attrs['SCALE_TYPE'] = 'linear'
-        dat['Channel'].attrs['UNITS'] = ''
-        dat['Channel'].attrs['VALID_MIN'] = 0
-        dat['Channel'].attrs['VALID_MAX'] = 5
-        dat['Channel'].attrs['VAR_TYPE'] = 'support_data'
-        dat['Channel'].attrs['VAR_NOTES'] = 'channel number'
-        return dat
-
-    def major_data(self, inval):
-        """
-        read in and add major data to the class
-        """
-        dt = FIREdata.dat2time(FIREdata.hex2int(inval[:8]))
-        # correct the time for the known delays
-        dt -= datetime.timedelta(microseconds=(MFIB_transfer_time+measurement_time/2))
-
-        # combine th nibbles and convert to an int
-        d1 = [int(v2 + v1, 16) for (v1, v2) in zip(inval[majorTimelen::2], inval[majorTimelen+1::2])]
-
-        self.dat['Epoch'] = dm.dmarray.append(self.dat['Epoch'], dt)
-        if len(self.dat['hr0']) == 0:
-            self.dat['hr0'] = dm.dmarray.hstack(self.dat['hr0'], d1[0:6])
-            self.dat['hr1'] = dm.dmarray.hstack(self.dat['hr1'], d1[6:])
-        else:
-            self.dat['hr0'] = dm.dmarray.vstack(self.dat['hr0'], d1[0:6])
-            self.dat['hr1'] = dm.dmarray.vstack(self.dat['hr1'], d1[6:])
+        self.dat = getSkelHIRES()
+        self.majorTime = None
+        self.meas_ind = 0
+        self.start_ind = 0
+        self.stop_ind = 0
 
 
-    def minor_data(self, inval, meas_ind=0):
+    @staticmethod
+    def inc_minor_time(dt, inval):
+        # we need to replace the milliseconds
+        us = 1000*( int(inval[0]+inval[1], 16) )
+        ## print("DT: {0}  us: {1}  delta: {2}".format(dt, us, us-dt.microsecond))
+        if  us < dt.microsecond:
+            dt += datetime.timedelta(seconds=1)
+        #if us == 1000000:
+        #    print("found us=1000000")
+        #    dt += datetime.timedelta(seconds=1)
+        dt = dt.replace(microsecond=us)
+        return dt
+
+    
+    def minor_data(self, inval, info, firstTime=None):
         """
         read in and add minor data to the class
         """
-        # get the last time
-        dt = self.dat['Epoch'][meas_ind-1]
-        # we need to replace the milliseconds
-        us = 1000*( int(inval[0]+inval[1], 16) )
-        if  us < self.dat['Epoch'][-1].microsecond:
-            dt += datetime.timedelta(seconds=1)
-        if us == 1000000:
-            print("found us=1000000")
-            dt += datetime.timedelta(seconds=1)
-        if us > 1000000:
-            print("found us>1000000")
-            return
+        ##   print("\t\tIN MINOR"), 
+        # get the previous stamp time
+        if firstTime is not None:
+            dt = firstTime
         else:
-            dt = dt.replace(microsecond=us)
-        # now that e have the time this is just passed back to the caller so some
-        #   checking can be done
+            dt = self.dat['Timestamp'][-1]
+        # take that stamp time and increment 
+        t1 = self.inc_minor_time(dt, inval[0:2]) # pass the timestamp in
+        self.dat['Timestamp'] = dm.dmarray.append(self.dat['Timestamp'], t1)
+        ##   print(" {0} ".format(t1.isoformat()))
 
         # combine th nibbles and convert to an int
-        d1 = [int(v2 + v1, 16) for (v1, v2) in zip(inval[minorTimelen::2], inval[minorTimelen+1::2])]
+        d1 = [int(v2 + v1, 16) for (v1, v2) in
+              zip(inval[minorTimelen::2], inval[minorTimelen+1::2])]
         # set the data at the correct index to the decoded data
-        self.dat['hr0'][meas_ind] = d1[0:6]
-        self.dat['hr1'][meas_ind] = d1[6:]
-        return dt
+        try:
+            self.dat['hr0'] = dm.dmarray.vstack(self.dat['hr0'], d1[0:6])
+            self.dat['hr1'] = dm.dmarray.vstack(self.dat['hr1'], d1[6:] )
+        except ValueError:
+            self.dat['hr0'] = dm.dmarray.hstack(self.dat['hr0'], d1[0:6])
+            self.dat['hr1'] = dm.dmarray.hstack(self.dat['hr1'], d1[6:] )
+
+        # just use the info from the first bit of the data
+        self.dat['seqnum'] = dm.dmarray.append(self.dat['seqnum'], int(info[0].seqnum, 16))
+        self.dat['seqidx'] = dm.dmarray.append(self.dat['seqidx'], int(info[0].seqidx, 16))
+        self.dat['pktnum'] = dm.dmarray.append(self.dat['pktnum'], int(info[0].pktnum, 16))
+
+
+    def getRealTime(self, data, major=True, startTime=None, skip=0):
+        """
+        go through and sync up the actual time with the 15,15,15,30 pattern
+
+        data is a list of packet
+        if major then then the packets start with 01, otherwise major is False
+        """
+        ################# find the correct time ##################################
+        # do some magic to find the actual time at the start of the request
+        # the time difference is 30, 15, 15, 15, 30, 15, ... ms between timestamps in the data
+        #   the time at the 15 before the 30 is exactly correct, the others are off
+        #   by the interplay of 18.75 and 15 ms between measurement cadence and TM cadence
+
+        if major:
+            time_temp = [FIREdata.dat2time(FIREdata.hex2int(data[0].data[skip:majorLen+skip]))]
+            range_start = majorLen
+        elif startTime is None:
+            raise(ValueError("If major is False startTime has to be set to last time"))
+        else:
+            time_temp = [startTime]
+            range_start = minorLen
+
+        # TODO something is wrong in here, come back and study
+            
+        for ii, jj in enumerate(range(range_start+skip, len(data[0].data[skip:]), minorLen)):
+            idx = range_start+ii*minorLen
+            idx = jj
+            us = 1000*( int(data[0].data[idx]+data[0].data[idx+1], 16) )
+            tt = time_temp[ii] + measurement_timeDT 
+            t1 = self.inc_minor_time(time_temp[ii], data[0].data[idx:idx+2])
+            time_temp.append(t1)
+            ## print tt-t1
+        # the time that is correct is the one right before a 30ms
+        try:
+            ind30 = np.diff(time_temp).tolist().index(datetime.timedelta(microseconds=30000))
+        except ValueError:
+            raise(ValueError("Could not get a sync on real time"))
+        if ind30 > 0: # we have one before
+            realtimeind = ind30
+            realtime = time_temp[realtimeind]
+        else:
+            ind30 = np.diff(time_temp[1:]).tolist().index(datetime.timedelta(microseconds=30000))
+            realtimeind = ind30
+            realtime = time_temp[1:][realtimeind]
+            realtimeind += 1 # the +1 since we skipped an element
+                        
+        self.syncInd = realtimeind
+        self.syncDT = realtime
+        print("Found the correct time: {0} index: {1}".format(realtime, realtimeind))
+
+    def decodeWhile(self, dataBuffer, dataInfo, firstTime):
+        """
+        regardless of the packet if there is more data in the buffer we should
+        decode it and add it to the arrays
+
+        firstTime is the time at the start of the dataBuffer, as the are always contigous
+        this is a safe thing to pass along
+        """
+        tmp = [dataBuffer.pop(0) for v in range(minorLen)]
+        tmpinfo = [dataInfo.pop(0) for v in range(minorLen)]
+        ##  print("\tIn while {0} bytes left in buffer".format(len(dataBuffer)))
+        self.minor_data(tmp, tmpinfo, firstTime=firstTime)
+        
+        while len(dataBuffer) >= minorLen:
+            # grab the data and trim the buffer
+            tmp = [dataBuffer.pop(0) for v in range(minorLen)]
+            tmpinfo = [dataInfo.pop(0) for v in range(minorLen)]
+            ##   print("\tIn while {0} bytes left in buffer".format(len(dataBuffer)))
+            self.minor_data(tmp, tmpinfo)
+
+    def timestampToEpoch(self):
+        """
+        change the timestamps to Epoch, be 15, 15, 15, 30 aware
+        """
+        tm = self.dat['Timestamp'][self.start_ind:self.stop_ind]
+        tm_diff = np.diff(tm)
+        ind30 = tm_diff.tolist().index(datetime.timedelta(0, 0, 30000))
+        if ind30 == 0:
+            tm_diff = np.diff(tm[1:])
+            # the +1 since we skipped one
+            ind30 = tm_diff.tolist().index(datetime.timedelta(0, 0, 30000))+1
+        # the time one before the 30 is the real time, then all others are
+        #  18.75 ms from there
+        epoch0 = self.dat['Timestamp'][ind30-1]
+        n_pre = ind30-1
+        epoch = [epoch0 - datetime.timedelta(microseconds=18.75*1e3*v) for v in range(n_pre, 0, -1)]
+        epoch += [epoch0]
+        epoch += [epoch0 + datetime.timedelta(microseconds=18.75*1e3*v)
+                  for v in range(n_pre+1, len(tm), 1)]
+        self.dat['Epoch'] = dm.dmarray.append(self.dat['Epoch'], epoch)
+
+            
+    @staticmethod
+    def stampToData(inval):
+        """
+        take a datetime and figure out what the data would have to be
+        for that stamp
+        """
+        vals = inval.strftime("%y,%m,%d,%H,%M,%S,%f").split(',')
+        vals2 = ['{0:02X}'.format(int(v)) for v in vals[:-1]]
+        tmp = '{0:04X}'.format(int(vals[-1])//1000)
+        vals2.extend([tmp[:2], tmp[2:]])
+        return vals2
 
     def read(self, filename):
         # need to have pages and packet information
+        tm = time.time()
         packets = packet.BIRDpackets(filename)
+        tm = timeDuration("Packet read", tm)
+        
+        cp = contigousPackets.fromPackets(packets)
+        # TODO for now drop all contigousPackets() that don't have a majorStamp
+        cp = [v for v in cp if v.majorStamps()]
 
-        # If we do not start with a pktnum = 01 skip this page until we find a pktnum
-        #  01 because that has the full time stamp
-        #  TODO it may be possible to work backwards using the seqidx and seqnum
+        print( [len(v) for v in cp] )
 
-        meas_ind = 0 # this counts the measurement in a page
-        previous_packet = None # holds the last packet
-        dataBuffer = [] # this holds the data form a packet as measurmenet may roll onto
-                        #   the next packet
-        for packet_ in packets:
-            """
-            loop over all the packets and extract data from them
-            - for a new page we have to get packet 01 or toss it
-            - from there create the times for each measurement and populate the
-               data as we go though the packets
-               - there are 162 measurements per page as 18.75 ms
-               - need to watch the minor stamps as they occur at 15 or 20ms increments
-                  which is the FIRE data cadence but the data transmission rate is 15ms
-               - also need to correct the timing for packet transmission time and
-                  move it to the middle of the measurement
-               - There are 0x13 (19) packets in each page (byte stuffing should not change this)
-            """
+        # now cp is a list of contigousPackets() so a lot of checking is unneeded
 
-            """
-            options in here:
-            1) new page starting with packet 01
-            2) new page with missing packet 01
-            3) current page with next packet
-            4) current page with missing packet
-            5) last packet of page at 13
-            6) last packet of a page with missing 13
-            """
-            ### if this a new page? ###
-            if previous_packet is not None and (packet_.seqidx != previous_packet.seqidx or \
-            packet_.seqnum != previous_packet.seqnum): # means we have moved to a new page
-                previous_packet = None
-
-            ### option 2 ###
-            if previous_packet is None and packet_.pktnum != '01':
-#            elif previous_packet is None and p.pktnum != '01':
-                print("Page did not start with packet '01' skipping packet {0}, cannot find time".format(packet_))
-                continue # this just skips the packet
-            ### option 1 ###
-            elif previous_packet is None and packet_.pktnum == '01': # new page starting
-                dataBuffer = [] # clear the dataBuffer as we are starting a new page
-                previous_packet = packet_ # hang on to the last packet
-                print packet_
-                # this is a decodable page, start now
+        for packets_ in cp: # loop over the contigousPackets() in the list
+            self.start_ind = len(self.dat['Timestamp'])
+            majors = packets_.majorStamps() # get the major timestamps
+            dataBuffer = [] # clear any remaining data
+            dataInfo = [] # clear any remaining info
+            for packet_ in packets_:  # loop over each packet in the contigousPackets()
+                # here combine all the data together and decode         
                 dataBuffer.extend(packet_.data) # grab the data out
-                # since p.pktnum == 01 this is a major time stamp, decode it.
-                tmp = [dataBuffer.pop(0) for v in range(majorLen)]
-                self.major_data(tmp)
-                # now we need to replcate the data forward 162 measurements
-                #  from the middlwe of one to the middle of the next is 18.75 ms
-                dt = [self.dat['Epoch'][-1] +
-                      datetime.timedelta(microseconds=measurement_time)*v for v in range(1, 162)]
-                # add another 161 measurments on at the correct times
-                self.dat['Epoch'] = dm.dmarray.append(self.dat['Epoch'], dt)
-                # add on data will fill for the next 161 measurements as well
-                arr = np.zeros((161, 6), dtype=int)
-                arr.fill(self.dat['hr0'].attrs['FILL_VALUE'])
-                self.dat['hr0'] = dm.dmarray.vstack( self.dat['hr0'], arr  )
-                self.dat['hr1'] = dm.dmarray.vstack( self.dat['hr1'], arr  )
-                # then update meas_ind to the next index to write
-                meas_ind += 1
-            ### option 3 ###
-            elif previous_packet is not None and \
-                int(packet_.pktnum, 16) == int(previous_packet.pktnum, 16)+1 and \
-                packet_.seqidx == previous_packet.seqidx and \
-                packet_.seqnum == previous_packet.seqnum: # next packet in current page
-                previous_packet = packet_ # hang on to the last packet
-                print packet_
-                # this is a decodable page, start now
-                dataBuffer.extend(packet_.data) # grab the data out
-                # just let the while loop below take case of the data
-            ### option 4 ###
-            elif previous_packet is not None and \
-                int(packet_.pktnum, 16) > int(previous_packet.pktnum, 16)+1 and \
-                packet_.seqidx == previous_packet.seqidx and \
-                packet_.seqnum == previous_packet.seqnum: # next packet in current page with a missing
-                previous_packet = packet_ # hang on to the last packet
-                print packet_
-                dataBuffer = [] # clear the dataBuffer as we lost data
-                # this is a decodable page, start now
-                dataBuffer.extend(packet_.data) # grab the data out
-                # look though the dataBuffer looking for what seems to be 2 minor stamps
-                #   the right length apart
-                while len(dataBuffer) > 0:
-                    t1 = int(dataBuffer[0]+dataBuffer[1], 16)
-                    try:
-                        t2 = int(dataBuffer[0+datalen+2]+dataBuffer[1+datalen+2], 16)
-                        if (t2 == t1+15) or (t2 == t1+30) or \
-                               (t2 == t1+15-1e6) or (t2 == t1+30-1e6): # this is certainly correct
-                            break
-                    except IndexError: # there is no more data
-                        # assume this is good
-                        break
-                    else:
+                dataInfo.extend([packet_]*len(packet_.data))
+            # search through the data for the major stamps and then sync up the time
+            # TODO is there a chance that the data could look like major stamps?
+            #   probably, but unlikely, if there is more than one sync to them all
+            #   then the probability drops more
+            findme = [hires.stampToData(v) for v in majors]
+            # the /2 is since each element has 2 bytes (characters)
+            ind = np.asarray([FIREdata.sublistExists(dataBuffer, v) for v in findme])//2
+            if None in ind:
+                raise(ValueError("Did not find the timestamp in the data!!"))
+            # figure out what time the first major makes the first minor entry
+            #   1) also if the first data is not a major some data will have to be thrown away
+            #   2) think on the 15, 15, 15, 30 pattern and how to propigate that backwards
+
+            # loop over all the values of ind changing majors to minors and removing fill
+            for jj, ind_n in enumerate(ind):
+                print(dataBuffer[ind[jj]:ind[jj]+50])
+                print len(dataBuffer), len(dataInfo)
+                dataBuffer = FIREdata.majorToMinor(dataBuffer, ind[jj])
+                dataInfo = FIREdata.majorToMinor(dataInfo, ind[jj])
+                print(dataBuffer[ind[jj]:ind[jj]+50])
+                print len(dataBuffer), len(dataInfo)
+                # now the indicies of the rest are 6 too high, fix them
+                ind[jj+1:] = ind[jj+1:]-6
+                print(dataBuffer[ind[jj]:ind[jj]+50])
+                if jj == 0:
+                    # 1) to remove them look for matching minors at the start that
+                    #      is the number of extra bytes
+                    print(dataBuffer[:40])
+                    # find the start of the data in the stream
+                    extra = FIREdata.findMinors(dataBuffer, minorLen)
+                    ind -= extra # all of the inds here
+                    for ii in range(extra):
                         dataBuffer.pop(0)
+                        dataInfo.pop(0)
+                    print len(dataBuffer), len(dataInfo)
+                    print(dataBuffer[ind[jj]:ind[jj]+50])
+                # there could well be fill inside the data before the end of a page
+                #   loop over all the minors looking for all zeros after
+                fill = FIREdata.findFill(dataBuffer, minorLen, ind[jj])
+                if ind[jj] > fill:
+                    for ii in range(ind[jj]-fill):
+                        dataBuffer.pop(fill)
+                        dataInfo.pop(fill)
+                    ## if ind[jj] % minorLen != 0:
+                    ##     raise(ValueError("Fill removal failed"))
+                    ind[jj:] -= ind[jj]-fill
+            # 2) Now that we have the right starting place
+            #    and the data all prepared for decoding
+            # figure out the time for the first timestamp
+            n_minors = ind[0] // minorLen
 
+            # the time back to the start is
+            avg_t = np.average([15, 15, 15, 30])*1e3
+            start_t = majors[0] - datetime.timedelta(microseconds=avg_t*(n_minors+3))
+            firstTime = self.inc_minor_time( start_t, dataBuffer[0:2] )
+            print majors[0], start_t, majors[0]-start_t
 
-                meas_ind += ( measurement_per_packet * (int(packet_.pktnum, 16)-int(previous_packet.pktnum, 16)))
-                # just let the while loop below take case of the data
-
-
-
-            """
-            regardless of the packet if there is more data in the buffer we should
-            decode it and add it to the arrays
-            """
-            while len(dataBuffer) >= minorLen:
-                # since p.pktnum == 1 this is a major time stamp, decode it.
-                tmp = [dataBuffer.pop(0) for v in range(minorLen)]
-                dt = self.minor_data(tmp, meas_ind)
-                meas_ind += 1
-#                if np.abs(total_seconds(dt-self.dat['Epoch'][meas_ind])) > 0.0128:
-#                    print("Something wrong with time sync")
-#                    raise(ValueError("Time sync error"))
-
-        # go through and remove duplicate times and data
-        print("Looking for duplicate measurements")
-
-        arr, dt_ind, return_inverse = np.unique(self.dat['Epoch'], return_index=True, return_inverse=True) # this is unique an sort
-        print("Found {0} duplicates of {1}".format(len(return_inverse)-len(dt_ind), len(return_inverse)))
-
-        self.dat['Epoch'] = arr
-        self.dat['hr0'] = self.dat['hr0'][dt_ind]
-        self.dat['hr1'] = self.dat['hr1'][dt_ind]
-
+            self.decodeWhile(dataBuffer, dataInfo, firstTime)
+            # now that all the data are decoded create the epoch variable
+            #   from the timestamps
+            self.stop_ind = len(self.dat['Timestamp'])
+            self.timestampToEpoch()
+            
         return self
-
-
-
-
-"""
-a missing page means 248 / 26 => 9.5 samples missing the ms should be valid
-just 15*9=135 ms later so it might often roll over
-"""
-
-
 

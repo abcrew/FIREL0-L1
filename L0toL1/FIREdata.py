@@ -11,6 +11,57 @@ import packet
 import page
 
 
+def findMinors(dataBuffer, datalen):
+    """
+    given an input dataBuffer return the index of the first monor time stamp
+    NOTE: if there is only one minor then a major this won't work...
+    """
+    for skip_bytes in range(datalen):
+        t1 = int(dataBuffer[skip_bytes+0]+dataBuffer[skip_bytes+1], 16)
+        try:
+            t2 = int(dataBuffer[skip_bytes+datalen]+dataBuffer[skip_bytes+1+datalen], 16)
+            if (t2 == t1+15) or (t2 == t1+30) or \
+                   (t2 == t1+15-1e3) or (t2 == t1+30-1e3): # this is certainly correct
+                break
+        except IndexError: # there is no more data
+            # assume this is good
+            break
+    return skip_bytes
+
+def findFill(dataBuffer, datalen, ind):
+    """
+    given an input dataBuffer return the start index of any fill before a major
+    """
+    skip_bytes = None
+    for skip_bytes in range(ind, 0, -1):
+        t2 = int(dataBuffer[skip_bytes-1]+dataBuffer[skip_bytes-0], 16)
+        t1 = int(dataBuffer[skip_bytes-1-datalen]+dataBuffer[skip_bytes-0-datalen], 16)
+        if (t2 == t1+15) or (t2 == t1+30) or \
+               (t2 == t1+15-1e3) or (t2 == t1+30-1e3): # this is certainly correct
+            break
+    if skip_bytes is None:
+        skip_bytes = 0
+    return skip_bytes-1+datalen
+
+
+def majorToMinor(inval, index):
+    """
+    given an input list and a start index of a major timestamp replace the major with a minor
+    """
+    # remove the 6 entries for the major that are not in the minor
+    for i in range(6):
+        inval.pop(index)
+    return inval
+
+
+def sublistExists(list1, list2):
+    try:
+        ans = ''.join(map(str, list1)).index(''.join(map(str, list2)))
+    except ValueError:
+        ans = None
+    return ans
+
+
 def total_seconds(dt):
     """
     make up for pyhton2.6 not having datetime.timedelta.total_seconds

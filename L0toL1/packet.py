@@ -4,6 +4,7 @@ import time
 import os
 
 import dateutil.parser as dup
+import spacepy.toolbox as tb
 
 from CCITT_CRC16 import CRCfromString
 
@@ -33,7 +34,7 @@ def parseL0name(inval):
     """
     take a L0 filename and return a datetime.date object
     """
-    date_split = inval.split('-')
+    date_split = os.path.basename(inval).split('-')
     date = datetime.date(int(date_split[0]), int(date_split[1]), int(date_split[2]))
     return date
 
@@ -127,7 +128,13 @@ class BIRDpackets(list):
         dat = [v.strip() for v in dat]
         self.filename = infile
         # make this class a list of BIRDpacket objects
-        self.extend([BIRDpacket(v, self.filename) for v in dat])
+        length = len(dat)
+        for ii, v in enumerate(dat):
+            if ii % 400 == 0:
+                tb.progressbar(ii, 1, length, text='Parsing Packets')
+            self.append(BIRDpacket(v, self.filename))
+        tb.progressbar(length, 1, length, text='Parsing Packets')
+        print('')
             
     def __str__(self):
         return("{0} packets: {1} bad CRC".format(len(self), int(sum([v.valid_crc for v in self if not v.valid_crc]))))
