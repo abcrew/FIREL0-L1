@@ -4,6 +4,16 @@ from spacepy import datamodel as dm
 
 def getSkelHIRES():
     dat = dm.SpaceData()
+    dat['Flag'] = dm.dmarray([], dtype=int)
+    dat['Flag'].attrs['CATDESC'] = 'Data flags'
+    dat['Flag'].attrs['FIELDNAM'] = 'Flag'
+    dat['Flag'].attrs['FILL_VALUE'] = -255
+    dat['Flag'].attrs['LABLAXIS'] = 'Flag'
+    dat['Flag'].attrs['SCALETYP'] = 'linear'
+    dat['Flag'].attrs['VALID_MIN'] = -254
+    dat['Flag'].attrs['VALID_MAX'] = 0
+    dat['Flag'].attrs['VAR_TYPE'] = 'support_data'
+    dat['Flag'].attrs['VAR_NOTES'] = 'Data flags, 0-good, -1-suspect time'
     dat['Epoch'] = dm.dmarray([])
     dat['Epoch'].attrs['CATDESC'] = 'Default Time'
     dat['Epoch'].attrs['FIELDNAM'] = 'Epoch'
