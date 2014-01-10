@@ -5,7 +5,7 @@
 from optparse import OptionParser
 import os
 
-import sync as ss
+import DataSync.sync as ss
 
 
 def doIt(conffile, verbose):
