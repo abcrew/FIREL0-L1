@@ -47,7 +47,7 @@ def makeTimes(starttime=datetime.datetime(2000, 1, 1), num=1000):
 def split(str, num=2):
     return [ str[start:start+num] for start in range(0, len(str), num) ]
 
-def ints_to_hex(inval, bytes=1):
+def ints_to_hex(inval, bytes=1, reverse=False):
     """
     convert all the data into its correct hex repr
     """
@@ -56,6 +56,9 @@ def ints_to_hex(inval, bytes=1):
     ans = '{0:04X}'.format(inval)
     if len(ans) > (bytes*2):
         ans = ans[-(bytes*2):]
+    if reverse:
+        ans = ' '.join(split(ans.strip())[::-1])
+        return ans + ' '
     return ' '.join(split(ans)) + ' '
     
 
@@ -117,13 +120,13 @@ def makeData(times, amp=10, period=40):
     return np.vstack( [channels, channels/10] ).T.astype(int)
     
 
-def buildPackets(starttime=datetime.datetime(2012, 3, 14, 12, 30, 50, 100000), num=16000, seed=123):
+def buildPackets(starttime=datetime.datetime(2012, 3, 14, 12, 30, 50, 100000), num=1000, seed=123):
     """
     do all the work of builing packets and spit them out
 
     16000 times is 5 minutes
     """
-    times = makeTimes(starttime, num)
+    times = makeTimes(starttime, num*9)
     # build up a 4096 page of data
     newPage = 1
     nbytes = 0
@@ -131,7 +134,9 @@ def buildPackets(starttime=datetime.datetime(2012, 3, 14, 12, 30, 50, 100000), n
     data = makeData(times)
     leftover = ''
 
-    figure()
+    print '** data stats **', data.min(), data.max()
+    
+    figure(figsize=(20,9))
     subplot(211)
     plot(times, data[:,0:6])
     subplot(212)
@@ -141,7 +146,7 @@ def buildPackets(starttime=datetime.datetime(2012, 3, 14, 12, 30, 50, 100000), n
     data = data.tolist()
 
     packets = []
-    seqnum = 10
+    seqnum = 63
     seqidx = 0 
     np.random.seed(seed)
     while times: # while we are not done
@@ -156,7 +161,7 @@ def buildPackets(starttime=datetime.datetime(2012, 3, 14, 12, 30, 50, 100000), n
             else:
                 page +=  datetime_to_minor(t) 
                 # now add the data
-            page += ''.join([ints_to_hex(v, 2) for v in data.pop(0)])
+            page += ''.join([ints_to_hex(v, 2, reverse=True) for v in data.pop(0)])
 
         newPage = True
         #        def makePacket(data, srcid=65287, destid=65281, cmd_tml=0, funid=205, seqnum=1, seqidx=1, pktnum=1):
