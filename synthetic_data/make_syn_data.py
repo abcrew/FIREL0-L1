@@ -96,7 +96,7 @@ def makePacketHeader(datalen, srcid=65287, destid=65281, cmd_tml=0, funid=205, s
 def makePacket(data, srcid=65287, destid=65281, cmd_tml=0, funid=205, seqnum=1, seqidx=1, pktnum=1):
     ans = makePacketHeader(len(data)//3,  srcid, destid, cmd_tml, funid, seqnum, seqidx, pktnum)
     ans += data
-    ans += ' ' + ints_to_hex(int(CRCfromString(ans.strip())[2:], 16),2)
+    ans += ' ' + ints_to_hex(int(CRCfromString(ans.strip())[2:], 16),2) + 'C0 ' 
     return ans
 
 def makeData(times, amp=10, period=40):
