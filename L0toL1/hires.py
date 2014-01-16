@@ -29,7 +29,7 @@ majorLen = datalen+majorTimelen
 minorLen = datalen+minorTimelen
 
 measurement_per_packet = 238 // minorLen
-# this is the number of measurments we hav to add if we miss a packet
+# this is the number of measurments we have to add if we miss a packet
 
 time_diffDT =  [datetime.timedelta(microseconds=11.25e3),
                 datetime.timedelta(microseconds=7.5e3),

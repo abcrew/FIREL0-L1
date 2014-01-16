@@ -53,7 +53,7 @@ def CalcCRC ( buffer):
 
 def CRCfromString(instr):
     dat = instr.split(' ')
-    dat = [int('0x'+ v, 16) for v in dat]
+    dat = [int(v, 16) for v in dat]
     return(hex(CalcCRC(dat)))
 
 
