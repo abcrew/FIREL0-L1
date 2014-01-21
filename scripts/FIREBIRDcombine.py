@@ -26,7 +26,7 @@ def doIt(files):
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
-        print("Usage: {0} infile [[infile] [infile] [...]]")
+        print("Usage: {0} infile [[infile] [infile] [...]]".format(sys.argv[0]))
         sys.exit(-1)
     files = sys.argv[1:]
     ans = doIt(files)
