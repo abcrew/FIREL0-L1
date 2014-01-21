@@ -84,6 +84,9 @@ class BIRDpacket(object):
         self.datalen = splitdat[10] # can be sorted for the last packet in a page
         self.data = splitdat[11:11+int(self.datalen,16)]
         self.crc = splitdat[11+int(self.datalen, 16):11+int(self.datalen, 16)+2]
+        self.packetend = splitdat[11+int(self.datalen, 16)+2]
+        if self.packetend != 'C0':
+            raise(ValueError("Packet did not end in C0"))
         self.valid_crc = self._crc_valid()
 
     def __eq__(self, other):

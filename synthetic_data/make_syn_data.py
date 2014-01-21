@@ -89,7 +89,7 @@ def makePacketHeader(datalen, srcid=65287, destid=65281, cmd_tml=0, funid=205, s
     header = ('C0 ' + ints_to_hex(srcid, 2) + ints_to_hex(destid, 2) + 
               ints_to_hex(cmd_tml, 1) + ints_to_hex(funid, 1) + 
               ints_to_hex(seqnum, 1) + ints_to_hex(seqidx, 1) + 
-              ints_to_hex(pktnum, 1) + ints_to_hex(datalen, 1))
+              ints_to_hex(pktnum, 1) + ints_to_hex(datalen+1, 1))
     ans += header
     return ans
 

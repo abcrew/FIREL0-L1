@@ -131,6 +131,7 @@ class hires(FIREdata.data):
         self.seqnum = []
         self.seqidx = []
         self.pktnum = []
+        self.grt = []
 
     @staticmethod
     def inc_minor_time(dt, inval):
@@ -268,6 +269,8 @@ class hires(FIREdata.data):
             dataBuffer = [] # clear any remaining data
             dataInfo = [] # clear any remaining info
             for packet_ in packets_:  # loop over each packet in the contigousPackets()
+                if packet_.pktnum == '13': # last packet of a page
+                    packet_.data = packet_.data[:-8] # throw away the fill bytes
                 # here combine all the data together and decode         
                 dataBuffer.extend(packet_.data) # grab the data out
                 dataInfo.extend([packet_]*len(packet_.data))
