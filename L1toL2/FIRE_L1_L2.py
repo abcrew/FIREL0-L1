@@ -94,30 +94,20 @@ def FIRE_L1_L2(datafile, ephemfile):
     if ftype < 1:
         print 'Invalid Datafile'
         return 0
-    full_data = dm.readJSONheadedASCII(datafile)
-    ephem = dm.readJSONheadedASCII(ephemfile)
-    data = Trim_data_file(full_data, ephem)
-    labels = ephem.keys()
-    new_data_fields = ephem_list
-    ephem_fields = ephem_list
-    dt = spt.Ticktock(data['Epoch']).TAI
-    et = spt.Ticktock(ephem['DateTime']).TAI
-    for i in range(len(ephem_fields)):
-        print ephem_fields[i]
-        y = ephem[ephem_fields[i]]
-        nx = tb.interpol(dt, et, y)
-        data[ephem_fields[i]] = dm.dmarray(nx)
-    day = ephem['DateTime'][0][0:10]
     if ftype == 1:
-        outfile = datafile[:-25] + day + '-Context_L2.txt'
+        data = FIRE_Context_L1_L2(datafile, ephemfile)
     if ftype == 2:
-        outfile = datafile[:-23] + day + '-HiRes_L2.txt'
-    dm.toJSONheadedASCII(outfile, data)
+        data = FIRE_HiRes_L1_L2(datafile, ephemfile)
     return data
     
 """
 Turns Hires L1->L2
 Only converts L, MLT, Lat, Lon from Ephem
+Need to add in the energy/GF conversions to fluxes
+e_flux:
+    cts/sec*energy/gf
+    orig: cts/18.75ms, gf is constant (per detector)
+    Want to mix channels (every other so they go by energy)
 """
 def FIRE_HiRes_L1_L2(datafile, ephemfile):
     full_data = dm.readJSONheadedASCII(datafile)
@@ -138,6 +128,8 @@ def FIRE_HiRes_L1_L2(datafile, ephemfile):
     data['Lat'] = dm.dmarray(nx)
     nx = tb.interpol(dt, et, ephem_lon)
     data['Lon'] = dm.dmarray(nx)
+    n_lines = len(data['Epoch'])
+    eflux = np.zeros(n_lines,12)
     day = ephem['DateTime'][0][0:10]
     outfile = datafile[:-23] + day + '-HiRes_L2.txt'
     dm.toJSONheadedASCII(outfile, data)
