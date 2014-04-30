@@ -1,4 +1,5 @@
 import datetime
+import sys
 
 import numpy as np
 from spacepy import datamodel as dm
@@ -68,6 +69,9 @@ class context(FIREdata.data):
     a context data file
     """
     def __init__(self, inlst):
+        if not inlst:
+            print("**  No packets decoded cannot continue  **")
+            sys.exit(1)
         dt = zip(*inlst)[0]
         data = np.hstack(zip(*inlst)[1]).reshape((-1, 2))
 
