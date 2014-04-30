@@ -24,7 +24,7 @@ Steps:
     2) Trim it down to a smaller size-->only the points from the correct day
     3) Build a new data structure [Is there an easy way to do this?]
     4) Step through data file and select appropriate ephem values
-        a) Initally find nearest value
+        a) Initially find nearest value
         b) Later want to do a linear interpolation
     5) Run through the data and flag 'questionable point'
     6) Write a new file (meta data?)
@@ -194,7 +194,7 @@ def FIRE_Context_L1_L2(datafile, ephemfile):
 
 
 """
-Determines the type of Datafile by parsing the lastfew characters
+Determines the type of Datafile by parsing the last few characters
 Assumes that these follow the standard naming conventions from L1
 Date_FILETYPE_L1.txt
 FILETYPE could be Context, HiRes, Config, or MicroBurst
@@ -243,7 +243,7 @@ def Trim_data_file(data, ephem):
     
 """
 Takes a numpy array of data, and goes through comparing each element to the
-one immediately before and after; if it is greater than height times those valus
+one immediately before and after; if it is greater than height times those values
 it is replaced by the average of them
     array: input array
     height: scale value not to exceed (i.e. 255)
